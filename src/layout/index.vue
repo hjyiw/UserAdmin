@@ -95,7 +95,9 @@
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item>个人中心</el-dropdown-item>
+                <el-dropdown-item @click="goToProfile"
+                  >个人中心</el-dropdown-item
+                >
                 <el-dropdown-item divided @click="handleLogout"
                   >退出登录</el-dropdown-item
                 >
@@ -147,6 +149,11 @@ const getVisibleChildren = (route) => {
 const userInfo = computed(() => {
   return userStore.userInfo;
 });
+
+// 跳转到个人中心
+const goToProfile = () => {
+  router.push("/profile");
+};
 
 // 处理退出登录
 const handleLogout = () => {

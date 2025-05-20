@@ -72,6 +72,28 @@ const mockLogout = () => {
   });
 };
 
+// 模拟修改密码API调用
+const mockUpdatePassword = (oldPassword, newPassword) => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      // 这里可以添加密码验证逻辑，例如：
+      // 假设旧密码必须是123456才能修改成功
+      if (oldPassword === "123456") {
+        resolve({
+          code: 200,
+          data: null,
+          msg: "密码修改成功",
+        });
+      } else {
+        reject({
+          code: 400,
+          message: "原密码错误",
+        });
+      }
+    }, 500);
+  });
+};
+
 export const useUserStore = defineStore("user", {
   state: () => ({
     token: getToken(),
@@ -144,6 +166,25 @@ export const useUserStore = defineStore("user", {
             this.permissions = user.permissions;
 
             resolve(data);
+          })
+          .catch((error) => {
+            reject(error);
+          });
+      });
+    },
+
+    // 修改密码
+    updatePassword(passwordInfo) {
+      const { oldPassword, newPassword } = passwordInfo;
+
+      return new Promise((resolve, reject) => {
+        mockUpdatePassword(oldPassword, newPassword)
+          .then((response) => {
+            // 如果用户勾选了记住密码，更新已保存的密码
+            if (this.rememberMe) {
+              setPassword(newPassword);
+            }
+            resolve(response);
           })
           .catch((error) => {
             reject(error);

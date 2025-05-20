@@ -21,6 +21,12 @@ const publicRoutes = [
         component: () => import("@/views/dashboard/index.vue"),
         meta: { title: "首页", icon: "HomeFilled" },
       },
+      {
+        path: "profile",
+        name: "Profile",
+        component: () => import("@/views/system/user/profile/index.vue"),
+        meta: { title: "个人中心", hidden: true },
+      },
     ],
   },
   {
@@ -86,21 +92,23 @@ router.beforeEach(async (to, from, next) => {
       // 获取用户信息和权限
       const userStore = useUserStore();
       const permissionStore = usePermissionStore();
-      
+
       // 判断是否已获取用户信息
       if (userStore.roles.length === 0) {
         try {
           // 获取用户信息
           const { user } = await userStore.getUserInfo();
-          
+
           // 根据用户权限生成可访问路由
-          const accessRoutes = await permissionStore.generateRoutes(user.permissions);
-          
+          const accessRoutes = await permissionStore.generateRoutes(
+            user.permissions
+          );
+
           // 动态添加路由
-          accessRoutes.forEach(route => {
+          accessRoutes.forEach((route) => {
             router.addRoute(route);
           });
-          
+
           // 重新导航到目标页面，确保路由已加载
           next({ ...to, replace: true });
         } catch (error) {
