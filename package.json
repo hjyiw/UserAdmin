@@ -17,8 +17,16 @@
     "@vue/cli-plugin-babel": "~5.0.0",
     "@vue/cli-plugin-eslint": "~5.0.0",
     "@vue/cli-service": "~5.0.0",
+    "element-plus": "^2.9.10",
     "eslint": "^7.32.0",
-    "eslint-plugin-vue": "^8.0.3"
+    "eslint-plugin-vue": "^8.0.3",
+    "js-cookie": "^3.0.5",
+    "pinia": "^3.0.2",
+    "sass": "^1.89.0",
+    "sass-loader": "^16.0.5",
+    "unplugin-auto-import": "^19.2.0",
+    "unplugin-vue-components": "^28.5.0",
+    "vue-router": "^4.5.1"
   },
   "eslintConfig": {
     "root": true,
@@ -32,7 +40,10 @@
     "parserOptions": {
       "parser": "@babel/eslint-parser"
     },
-    "rules": {}
+    "rules": {
+      "vue/multi-word-component-names": "off",
+      "no-unused-vars": "warn"
+    }
   },
   "browserslist": [
     "> 1%",
