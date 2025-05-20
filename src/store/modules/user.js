@@ -1,6 +1,17 @@
 // 用户管理模块
 import { defineStore } from "pinia";
-import { getToken, setToken, removeToken } from "@/utils/auth";
+import {
+  getToken,
+  setToken,
+  removeToken,
+  getUsername,
+  setUsername,
+  getPassword,
+  setPassword,
+  getRememberMe,
+  setRememberMe,
+  clearLoginInfo,
+} from "@/utils/auth";
 import { usePermissionStore } from "./permission";
 import router from "@/router";
 
@@ -67,6 +78,7 @@ export const useUserStore = defineStore("user", {
     userInfo: {},
     roles: [],
     permissions: [],
+    rememberMe: getRememberMe() || false,
   }),
 
   getters: {
@@ -74,12 +86,14 @@ export const useUserStore = defineStore("user", {
     getRoles: (state) => state.roles,
     // 获取用户权限
     getPermissions: (state) => state.permissions,
+    // 获取记住我状态
+    getRememberMe: (state) => state.rememberMe,
   },
 
   actions: {
     // 登录
     login(userInfo) {
-      const { username, password } = userInfo;
+      const { username, password, rememberMe = false } = userInfo;
       return new Promise((resolve, reject) => {
         mockLogin(username, password)
           .then((response) => {
@@ -87,6 +101,21 @@ export const useUserStore = defineStore("user", {
             // 设置token
             setToken(data.token);
             this.token = data.token;
+
+            // 更新记住我状态
+            this.rememberMe = rememberMe;
+            setRememberMe(rememberMe);
+
+            // 如果记住我，保存用户名和密码
+            if (rememberMe) {
+              setUsername(username);
+              setPassword(password);
+            } else {
+              // 如果不记住，清除之前可能存储的信息
+              clearLoginInfo();
+              setToken(data.token); // 重新设置token，因为clearLoginInfo也会清除token
+            }
+
             resolve(data);
           })
           .catch((error) => {
@@ -142,8 +171,15 @@ export const useUserStore = defineStore("user", {
 
     // 清除用户状态
     clearUserState() {
-      // 清除token
-      removeToken();
+      // 判断是否需要保留用户凭据（记住密码）
+      if (!this.rememberMe) {
+        // 如果没有记住密码，清除所有登录信息
+        clearLoginInfo();
+      } else {
+        // 如果记住密码，只清除token
+        removeToken();
+      }
+
       this.token = "";
       this.userInfo = {};
       this.roles = [];
@@ -167,6 +203,25 @@ export const useUserStore = defineStore("user", {
         this.permissions = [];
         resolve();
       });
+    },
+
+    // 加载存储的用户信息（如果有）
+    loadSavedUserInfo() {
+      // 获取存储的用户名和密码（如果启用了记住我）
+      if (this.rememberMe) {
+        const username = getUsername();
+        const password = getPassword();
+
+        if (username && password) {
+          return {
+            username,
+            password,
+            rememberMe: true,
+          };
+        }
+      }
+
+      return null;
     },
   },
 });

@@ -29,6 +29,10 @@
         />
       </el-form-item>
 
+      <div class="remember-container">
+        <el-checkbox v-model="loginForm.rememberMe">记住密码</el-checkbox>
+      </div>
+
       <el-button
         :loading="loading"
         type="primary"
@@ -41,7 +45,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useUserStore } from "@/store";
@@ -53,8 +57,9 @@ const loginFormRef = ref(null);
 const loading = ref(false);
 
 const loginForm = reactive({
-  username: "admin",
-  password: "123456",
+  username: "",
+  password: "",
+  rememberMe: false,
 });
 
 const loginRules = {
@@ -62,6 +67,7 @@ const loginRules = {
   password: [{ required: true, message: "请输入密码", trigger: "blur" }],
 };
 
+// 处理登录
 const handleLogin = () => {
   loginFormRef.value.validate(async (valid) => {
     if (valid) {
@@ -70,7 +76,7 @@ const handleLogin = () => {
         // 调用store的登录方法
         await userStore.login(loginForm);
         ElMessage.success("登录成功");
-        
+
         // 获取重定向地址
         const redirect = route.query.redirect || "/";
         router.push({ path: redirect });
@@ -82,6 +88,16 @@ const handleLogin = () => {
     }
   });
 };
+
+// 页面加载时，尝试加载保存的用户信息
+onMounted(() => {
+  const savedUserInfo = userStore.loadSavedUserInfo();
+  if (savedUserInfo) {
+    loginForm.username = savedUserInfo.username;
+    loginForm.password = savedUserInfo.password;
+    loginForm.rememberMe = savedUserInfo.rememberMe;
+  }
+});
 </script>
 
 <style lang="scss" scoped>
@@ -108,6 +124,13 @@ const handleLogin = () => {
         color: #303133;
         margin: 0;
       }
+    }
+
+    .remember-container {
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
   }
 }
