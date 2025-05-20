@@ -48,6 +48,19 @@ const mockGetUserInfo = () => {
   });
 };
 
+// 模拟退出登录API调用
+const mockLogout = () => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({
+        code: 200,
+        data: null,
+        msg: "退出成功",
+      });
+    }, 500);
+  });
+};
+
 export const useUserStore = defineStore("user", {
   state: () => ({
     token: getToken(),
@@ -111,22 +124,37 @@ export const useUserStore = defineStore("user", {
 
     // 退出登录
     logout() {
-      return new Promise((resolve) => {
-        // 清除token
-        removeToken();
-        this.token = "";
-        this.userInfo = {};
-        this.roles = [];
-        this.permissions = [];
-
-        // 重置路由
-        const permissionStore = usePermissionStore();
-        permissionStore.resetRoutes();
-
-        // 跳转到登录页
-        router.push("/login");
-        resolve();
+      return new Promise((resolve, reject) => {
+        // 调用退出登录API
+        mockLogout()
+          .then(() => {
+            this.clearUserState();
+            resolve();
+          })
+          .catch((error) => {
+            // 即使API调用失败，也清除本地状态
+            console.error("退出登录失败，但仍会清除本地状态:", error);
+            this.clearUserState();
+            resolve();
+          });
       });
+    },
+
+    // 清除用户状态
+    clearUserState() {
+      // 清除token
+      removeToken();
+      this.token = "";
+      this.userInfo = {};
+      this.roles = [];
+      this.permissions = [];
+
+      // 重置路由
+      const permissionStore = usePermissionStore();
+      permissionStore.resetRoutes();
+
+      // 跳转到登录页
+      router.push("/login");
     },
 
     // 重置token

@@ -96,7 +96,7 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item>个人中心</el-dropdown-item>
-                <el-dropdown-item divided @click="logout"
+                <el-dropdown-item divided @click="handleLogout"
                   >退出登录</el-dropdown-item
                 >
               </el-dropdown-menu>
@@ -116,7 +116,7 @@
 <script setup>
 import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ElMessageBox } from "element-plus";
+import { ElMessageBox, ElMessage } from "element-plus";
 import { useUserStore, usePermissionStore } from "@/store";
 
 const route = useRoute();
@@ -148,20 +148,39 @@ const userInfo = computed(() => {
   return userStore.userInfo;
 });
 
-// 退出登录
-const logout = () => {
+// 处理退出登录
+const handleLogout = () => {
   ElMessageBox.confirm("确定要退出登录吗?", "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning",
   })
-    .then(() => {
-      // 调用store中的退出登录方法
-      userStore.logout().then(() => {
+    .then(async () => {
+      try {
+        // 显示加载状态
+        const loadingMessage = ElMessage({
+          message: "正在退出...",
+          type: "info",
+          duration: 0,
+        });
+
+        // 调用store中的退出登录方法
+        await userStore.logout();
+
+        // 关闭加载提示
+        loadingMessage.close();
+
+        // 显示成功提示
+        ElMessage.success("退出登录成功");
+
         // 页面已经在store的logout方法中跳转到登录页
-      });
+      } catch (error) {
+        ElMessage.error("退出登录失败：" + (error.message || "未知错误"));
+      }
     })
-    .catch(() => {});
+    .catch(() => {
+      // 用户取消退出操作
+    });
 };
 </script>
 
