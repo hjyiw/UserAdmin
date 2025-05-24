@@ -3,7 +3,7 @@
     <!-- 侧边栏 -->
     <div class="sidebar-container">
       <div class="logo-container">
-        <h1 class="logo-title">用户管理系统</h1>
+        <h1 class="logo-title">用户权限管理系统</h1>
       </div>
       <el-menu
         :default-active="activeMenu"

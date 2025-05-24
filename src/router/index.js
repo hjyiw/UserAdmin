@@ -3,7 +3,7 @@ import { getToken } from "@/utils/auth";
 import { useUserStore, usePermissionStore } from "@/store";
 import { ElMessage } from "element-plus";
 
-// 公共路由
+// 公共路由: 登录、忘记密码、重置密码、主页、404页
 const publicRoutes = [
   {
     path: "/login",
@@ -63,31 +63,50 @@ const notFoundRoute = {
   meta: { hidden: true },
 };
 
-// 权限路由
+// 权限路由: 系统管理、用户管理、角色管理、部门管理
 const permissionRoutes = [
   {
     path: "/system",
     component: () => import("@/layout/index.vue"),
     redirect: "/system/user",
-    meta: { title: "系统管理", icon: "Setting" },
+    meta: {
+      title: "系统管理",
+      icon: "Setting",
+      permissions: ["system:view"],
+    },
     children: [
+      // 用户管理
       {
         path: "user",
         name: "User",
         component: () => import("@/views/system/user/index.vue"),
-        meta: { title: "用户管理", icon: "User" },
+        meta: {
+          title: "用户管理",
+          icon: "User",
+          permissions: ["system:user:list"],
+        },
       },
+      // 角色管理
       {
         path: "role",
         name: "Role",
         component: () => import("@/views/system/role/index.vue"),
-        meta: { title: "角色管理", icon: "UserFilled" },
+        meta: {
+          title: "角色管理",
+          icon: "UserFilled",
+          permissions: ["system:role:list"],
+        },
       },
+      // 部门管理
       {
         path: "dept",
         name: "Dept",
         component: () => import("@/views/system/dept/index.vue"),
-        meta: { title: "部门管理", icon: "OfficeBuilding" },
+        meta: {
+          title: "部门管理",
+          icon: "OfficeBuilding",
+          permissions: ["system:dept:list"],
+        },
       },
     ],
   },
@@ -98,7 +117,7 @@ const router = createRouter({
   routes: publicRoutes, // 初始路由不包含404的通配符路由
 });
 
-// 白名单路由
+// 白名单路由：登录、忘记密码、重置密码
 const whiteList = ["/login", "/forget", "/reset-password"];
 
 // 路由守卫
@@ -107,34 +126,40 @@ router.beforeEach(async (to, from, next) => {
   const hasToken = getToken();
 
   console.log("Navigation to:", to.path, "| Has token:", !!hasToken);
-
+  // 如果有token，已登录
   if (hasToken) {
     // 已登录状态下访问登录页，重定向到首页
     if (to.path === "/login") {
       next({ path: "/" });
     } else {
       // 获取用户信息和权限
+
       const userStore = useUserStore();
       const permissionStore = usePermissionStore();
 
+      // 打印用户角色长度
       console.log("User roles length:", userStore.roles.length);
 
       // 判断是否已获取用户信息
       if (userStore.roles.length === 0) {
         try {
-          // 获取用户信息
+          // 发送请求 获取用户信息
           const { user } = await userStore.getUserInfo();
+
           console.log(
             "User info loaded:",
-            user.username,
+            user.username, // 用户名
             "| Permissions:",
-            user.permissions
+            user.permissions // 用户权限
           );
 
           // 根据用户权限生成可访问路由
           const accessRoutes = await permissionStore.generateRoutes(
-            user.permissions
+            user.permissions,
+            user.roles
           );
+
+          // 打印生成的路由
           console.log(
             "Generated routes:",
             accessRoutes.map((r) => r.path)
@@ -157,6 +182,10 @@ router.beforeEach(async (to, from, next) => {
 
           // 重新导航到目标页面，确保路由已加载
           console.log("Redirecting to:", to.path);
+
+          // replace: true 指定使用 router.replace() 而非默认的 router.push()，
+          // 这意味着浏览器历史记录会被替换而非追加，
+          // 用户无法通过后退按钮返回前一个页面
           next({ ...to, replace: true });
         } catch (error) {
           // 获取用户信息失败，清空token并跳转到登录页
@@ -175,9 +204,11 @@ router.beforeEach(async (to, from, next) => {
           // 重新获取路由配置
           const permissionStore = usePermissionStore();
           const accessRoutes = await permissionStore.generateRoutes(
-            userStore.permissions
+            userStore.permissions,
+            userStore.roles
           );
 
+          // 打印重新生成的路由
           console.log(
             "Re-generated routes:",
             accessRoutes.map((r) => r.path)
@@ -198,9 +229,11 @@ router.beforeEach(async (to, from, next) => {
             router.getRoutes().map((r) => r.path)
           );
 
-          // 关键修复：确保路由表已更新
+          // 确保路由表已更新
           // 使用 router.resolve 检查路由是否可以被解析
           const resolved = router.resolve(to.path);
+
+          // 打印解析后的路由
           console.log(
             "Resolved route:",
             resolved.path,
@@ -217,6 +250,7 @@ router.beforeEach(async (to, from, next) => {
             next("/dashboard"); // 导航到安全的默认页面
           }
         } else {
+          // 路由可以被解析，直接导航
           next();
         }
       }

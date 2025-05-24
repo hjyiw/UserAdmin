@@ -32,6 +32,7 @@ const mockLogin = (username, password) => {
   });
 };
 
+// 模拟获取用户信息API调用
 const mockGetUserInfo = () => {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -50,14 +51,14 @@ const mockGetUserInfo = () => {
             deptId: 1,
             deptName: "研发部门",
             deptPath: "0,1",
-            roles: ["admin"],
+            roles: ["admin"], // 用户角色
             permissions: [
-              "system:user:list",
-              "system:role:list",
-              "system:dept:list",
-            ],
-            dataScope: "1", // 全部数据权限
-            deptIds: [1, 2, 3, 4, 5, 6, 7, 8, 9], // 自定义权限部门列表
+              "system:user:list", // 用户管理
+              "system:role:list", // 角色管理
+              "system:dept:list", // 部门管理
+            ], // 用户权限
+            dataScope: DATA_SCOPE_TYPES.ALL, // 全部数据权限
+            deptIds: [1, 2, 3, 4, 5, 6, 7, 8, 9], // 用户可访问的部门范围
           },
         },
         msg: "获取成功",
@@ -166,11 +167,11 @@ const mockResetPassword = (resetInfo) => {
 
 export const useUserStore = defineStore("user", {
   state: () => ({
-    token: getToken(),
-    userInfo: {},
-    roles: [],
-    permissions: [],
-    rememberMe: getRememberMe() || false,
+    token: getToken(), // 获取token
+    userInfo: {}, // 用户信息
+    roles: [], // 用户角色
+    permissions: [], // 用户权限
+    rememberMe: getRememberMe() || false, // 记住我状态
     dataScope: "5", // 默认数据权限为仅本人
     deptIds: [], // 自定义权限部门列表
   }),
@@ -205,6 +206,7 @@ export const useUserStore = defineStore("user", {
   actions: {
     // 登录
     login(userInfo) {
+      // 解构用户信息
       const { username, password, rememberMe = false } = userInfo;
       return new Promise((resolve, reject) => {
         mockLogin(username, password)
@@ -216,9 +218,10 @@ export const useUserStore = defineStore("user", {
 
             // 更新记住我状态
             this.rememberMe = rememberMe;
+            // 设置记住我Cookie状态
             setRememberMe(rememberMe);
 
-            // 如果记住我，保存用户名和密码
+            // 如果记住我，保存用户名和密码到Cookie
             if (rememberMe) {
               setUsername(username);
               setPassword(password);
@@ -242,7 +245,7 @@ export const useUserStore = defineStore("user", {
         mockGetUserInfo()
           .then((response) => {
             const { data } = response;
-            const { user } = data;
+            const { user } = data; // 用户对象
 
             if (!user) {
               reject("获取用户信息失败，请重新登录");

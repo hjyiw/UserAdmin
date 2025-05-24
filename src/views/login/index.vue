@@ -74,6 +74,7 @@ const loginRules = {
 
 // 处理登录
 const handleLogin = () => {
+  // 验证表单
   loginFormRef.value.validate(async (valid) => {
     if (valid) {
       loading.value = true;
@@ -83,6 +84,8 @@ const handleLogin = () => {
         ElMessage.success("登录成功");
 
         // 获取重定向地址
+
+        // 如果存在重定向地址 则跳转 否则跳转首页
         const redirect = route.query.redirect || "/";
         router.push({ path: redirect });
       } catch (error) {
@@ -103,7 +106,7 @@ const goToForgetPassword = () => {
 onMounted(() => {
   // 加载保存的用户信息
   const savedUserInfo = userStore.loadSavedUserInfo();
-  //
+  //如果之前选择了记住我 则加载保存的信息
   if (savedUserInfo) {
     loginForm.username = savedUserInfo.username;
     loginForm.password = savedUserInfo.password;

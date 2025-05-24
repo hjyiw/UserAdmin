@@ -3,12 +3,17 @@ import { defineStore } from "pinia";
 import { publicRoutes, permissionRoutes } from "@/router";
 import router from "@/router"; // 导入router实例
 
-// 过滤路由
+/**
+ * 过滤路由
+ * @param {Array} routes - 路由
+ * @param {Array} permissions - 权限
+ * @returns {Array} - 返回 可访问路由
+ */
 function filterAsyncRoutes(routes, permissions) {
   const res = [];
 
   routes.forEach((route) => {
-    const tmp = { ...route };
+    const tmp = { ...route }; // 深拷贝当前路由对象
     // 检查是否有权限访问该路由
     if (hasPermission(permissions, tmp)) {
       // 如果有子路由，递归过滤
@@ -23,6 +28,12 @@ function filterAsyncRoutes(routes, permissions) {
 }
 
 // 判断是否有权限
+/**
+ * 判断是否有权限
+ * @param {Array} permissions - 权限
+ * @param {Object} route - 路由
+ * @returns {Boolean} - 返回 是否可访问
+ */
 function hasPermission(permissions, route) {
   // 如果路由没有设置权限要求，则默认可访问
   if (!route.meta || !route.meta.permissions) {
@@ -37,9 +48,9 @@ function hasPermission(permissions, route) {
 
 export const usePermissionStore = defineStore("permission", {
   state: () => ({
-    routes: [],
-    addRoutes: [],
-    permissions: [],
+    routes: [], // 所有路由
+    addRoutes: [], // 动态路由
+    permissions: [], // 用户权限
   }),
 
   getters: {
@@ -52,24 +63,29 @@ export const usePermissionStore = defineStore("permission", {
   actions: {
     // 设置路由
     setRoutes(routes) {
-      this.addRoutes = routes;
-      this.routes = publicRoutes.concat(routes);
+      this.addRoutes = routes; // 设置动态路由
+      this.routes = publicRoutes.concat(routes); // 合并公共路由和动态路由
     },
 
     // 设置权限
     setPermissions(permissions) {
-      this.permissions = permissions;
+      this.permissions = permissions; // 设置用户权限
     },
 
-    // 生成路由
-    generateRoutes(permissions) {
+    /**
+     * 生成路由
+     * @param {Array} permissions - 用户权限
+     * @param {Array} roles - 用户角色
+     * @returns {Promise} - 返回 可访问路由
+     */
+    generateRoutes(permissions, roles) {
       return new Promise((resolve) => {
         // 保存权限
         this.setPermissions(permissions);
 
         let accessedRoutes;
-        // 如果包含admin权限，可以访问所有路由
-        if (permissions.includes("admin")) {
+        // 如果用户拥有admin角色，可以访问所有路由
+        if (roles.includes("admin")) {
           accessedRoutes = permissionRoutes || [];
         } else {
           // 根据权限过滤路由
