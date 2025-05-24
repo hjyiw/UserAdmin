@@ -40,17 +40,23 @@ const mockGetUserInfo = () => {
         data: {
           user: {
             id: 1,
+            userId: 1,
             username: "admin",
             nickname: "管理员",
             avatar:
               "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif",
             email: "admin@example.com",
+            deptId: 1,
+            deptName: "研发部门",
+            deptPath: "0,1",
             roles: ["admin"],
             permissions: [
               "system:user:list",
               "system:role:list",
               "system:dept:list",
             ],
+            dataScope: "1", // 全部数据权限
+            deptIds: [1, 2, 3, 4, 5, 6, 7, 8, 9], // 自定义权限部门列表
           },
         },
         msg: "获取成功",
@@ -164,6 +170,8 @@ export const useUserStore = defineStore("user", {
     roles: [],
     permissions: [],
     rememberMe: getRememberMe() || false,
+    dataScope: "5", // 默认数据权限为仅本人
+    deptIds: [], // 自定义权限部门列表
   }),
 
   getters: {
@@ -173,6 +181,12 @@ export const useUserStore = defineStore("user", {
     getPermissions: (state) => state.permissions,
     // 获取记住我状态
     getRememberMe: (state) => state.rememberMe,
+    // 获取数据权限
+    getDataScope: (state) => state.dataScope,
+    // 获取自定义权限部门列表
+    getDeptIds: (state) => state.deptIds,
+    // 判断是否有指定数据权限
+    hasDataScope: (state) => (scopeType) => state.dataScope === scopeType,
   },
 
   actions: {
@@ -227,6 +241,10 @@ export const useUserStore = defineStore("user", {
             this.userInfo = user;
             this.roles = user.roles;
             this.permissions = user.permissions;
+
+            // 保存数据权限信息
+            this.dataScope = user.dataScope || "5"; // 默认为仅本人
+            this.deptIds = user.deptIds || [];
 
             resolve(data);
           })
@@ -306,6 +324,10 @@ export const useUserStore = defineStore("user", {
       this.roles = [];
       this.permissions = [];
 
+      // 清除数据权限信息
+      this.dataScope = "5";
+      this.deptIds = [];
+
       // 重置路由
       const permissionStore = usePermissionStore();
       permissionStore.resetRoutes();
@@ -325,6 +347,10 @@ export const useUserStore = defineStore("user", {
         this.userInfo = {};
         this.roles = [];
         this.permissions = [];
+
+        // 清除数据权限信息
+        this.dataScope = "5";
+        this.deptIds = [];
 
         // 重置路由
         const permissionStore = usePermissionStore();
