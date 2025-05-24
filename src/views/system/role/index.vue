@@ -220,6 +220,8 @@
             node-key="menuId"
             :props="{ label: 'menuName', children: 'children' }"
             :default-checked-keys="permissionForm.menuIds"
+            default-expand-all
+            check-strictly
           />
         </el-form-item>
       </el-form>
@@ -453,12 +455,19 @@ const handleEdit = async (row) => {
 const handlePermission = async (row) => {
   permissionForm.roleId = row.roleId;
   permissionForm.roleName = row.roleName;
-  permissionForm.menuIds = row.menuIds || [];
 
-  // 获取菜单列表
-  await getMenuList();
+  try {
+    // 先获取角色详情，确保获取最新的menuIds
+    const res = await getRoleInfo(row.roleId);
+    permissionForm.menuIds = res.data.menuIds || [];
 
-  permissionVisible.value = true;
+    // 获取菜单列表
+    await getMenuList();
+
+    permissionVisible.value = true;
+  } catch (error) {
+    ElMessage.error(error.message || "获取角色权限信息失败");
+  }
 };
 
 // 提交权限设置
@@ -471,7 +480,7 @@ const submitPermission = async () => {
     // 更新角色权限
     await updateRole({
       roleId: permissionForm.roleId,
-      menuIds,
+      menuIds: menuIds,
     });
 
     ElMessage.success("权限分配成功");
