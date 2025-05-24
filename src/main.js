@@ -23,3 +23,17 @@ app
   .use(router)
   .use(ElementPlus, { size: "default", zIndex: 3000 })
   .mount("#app");
+
+// 添加全局错误处理器来忽略ResizeObserver警告
+const originalConsoleError = window.console.error;
+window.console.error = (...args) => {
+  if (
+    args[0] &&
+    typeof args[0] === "string" &&
+    args[0].includes("ResizeObserver")
+  ) {
+    // 忽略ResizeObserver相关警告
+    return;
+  }
+  originalConsoleError.apply(console, args);
+};

@@ -74,7 +74,7 @@
           prop="createTime"
           width="160"
         />
-        <el-table-column label="操作" align="center" width="220">
+        <el-table-column label="操作" align="center" width="280">
           <template #default="scope">
             <el-button
               type="primary"
@@ -91,6 +91,9 @@
               v-data-perm="{ resource: scope.row, action: 'edit' }"
             >
               <el-icon><Edit /></el-icon> 修改
+            </el-button>
+            <el-button type="success" link @click="handleViewUsers(scope.row)">
+              <el-icon><User /></el-icon> 用户
             </el-button>
             <el-button
               type="danger"
@@ -166,13 +169,93 @@
         </div>
       </template>
     </el-dialog>
+
+    <!-- 部门用户对话框 -->
+    <el-dialog
+      :title="currentDept.deptName + ' - 部门用户'"
+      v-model="userDialogVisible"
+      width="900px"
+      append-to-body
+      destroy-on-close
+    >
+      <div v-loading="userLoading">
+        <el-table
+          :data="deptUsers"
+          style="width: 100%"
+          border
+          stripe
+          highlight-current-row
+        >
+          <el-table-column
+            label="用户编号"
+            prop="userId"
+            width="80"
+            align="center"
+          />
+          <el-table-column
+            label="用户名称"
+            prop="username"
+            :show-overflow-tooltip="true"
+            width="120"
+          />
+          <el-table-column
+            label="用户昵称"
+            prop="nickname"
+            :show-overflow-tooltip="true"
+            width="120"
+          />
+          <el-table-column
+            label="手机号码"
+            prop="phone"
+            width="120"
+            :show-overflow-tooltip="true"
+          />
+          <el-table-column
+            label="邮箱"
+            prop="email"
+            :show-overflow-tooltip="true"
+            min-width="150"
+          />
+          <el-table-column label="状态" align="center" width="100">
+            <template #default="scope">
+              <el-tag :type="scope.row.status === '0' ? 'success' : 'danger'">
+                {{ scope.row.status === "0" ? "正常" : "停用" }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="创建时间"
+            align="center"
+            prop="createTime"
+            width="160"
+            :show-overflow-tooltip="true"
+          />
+        </el-table>
+
+        <div v-if="deptUsers.length === 0" class="empty-data">
+          <el-empty description="暂无用户数据" />
+        </div>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="userDialogVisible = false">关 闭</el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted, nextTick } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Search, Refresh, Edit, Delete, Plus } from "@element-plus/icons-vue";
+import {
+  Search,
+  Refresh,
+  Edit,
+  Delete,
+  Plus,
+  User,
+} from "@element-plus/icons-vue";
 import {
   listDepartment,
   getDepartment,
@@ -181,6 +264,7 @@ import {
   deleteDepartment,
   changeDepartmentStatus,
   listDepartmentSelector,
+  listDepartmentUsers,
 } from "@/api/department";
 import { useUserStore } from "@/store";
 import { checkDataPermission } from "@/utils/permission";
@@ -201,6 +285,12 @@ const deptFormRef = ref(null);
 const dialogVisible = ref(false);
 // 对话框标题
 const dialogTitle = ref("");
+
+// 部门用户相关
+const userDialogVisible = ref(false);
+const userLoading = ref(false);
+const deptUsers = ref([]);
+const currentDept = ref({});
 
 // 查询参数
 const queryParams = reactive({
@@ -253,7 +343,15 @@ const deptRules = {
 const getDeptList = async () => {
   loading.value = true;
   try {
-    const res = await listDepartment(queryParams);
+    // 获取当前用户权限信息
+    const userPermissions = {
+      roles: userStore.roles || [],
+      dataScope: userStore.permissions?.dataScope,
+      deptId: userStore.userInfo?.deptId,
+      deptIds: userStore.userInfo?.deptIds || [],
+    };
+
+    const res = await listDepartment(queryParams, userPermissions);
     deptList.value = res.data;
   } catch (error) {
     console.error("获取部门列表失败:", error);
@@ -275,6 +373,20 @@ const getDeptOptions = async () => {
   } catch (error) {
     console.error("获取部门选择器数据失败:", error);
     ElMessage.error("获取部门选择器数据失败");
+  }
+};
+
+// 获取部门用户列表
+const getDeptUsers = async (deptId) => {
+  userLoading.value = true;
+  try {
+    const res = await listDepartmentUsers(deptId);
+    deptUsers.value = res.data;
+  } catch (error) {
+    console.error("获取部门用户列表失败:", error);
+    ElMessage.error("获取部门用户列表失败");
+  } finally {
+    userLoading.value = false;
   }
 };
 
@@ -357,6 +469,13 @@ const handleEdit = async (row) => {
   }
 };
 
+// 查看部门用户按钮操作
+const handleViewUsers = (row) => {
+  currentDept.value = row;
+  userDialogVisible.value = true;
+  getDeptUsers(row.deptId);
+};
+
 // 删除部门按钮操作
 const handleDelete = (row) => {
   if (hasChildren(row)) {
@@ -431,6 +550,10 @@ onMounted(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
+  }
+
+  .empty-data {
+    padding: 30px 0;
   }
 }
 </style>

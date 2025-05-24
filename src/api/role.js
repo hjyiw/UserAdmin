@@ -170,10 +170,13 @@ export function listRoles(params) {
 
       resolve({
         code: 200,
-        data: {
-          total,
-          list: filteredData,
-        },
+        data:
+          params && params.pageNum
+            ? {
+                total,
+                list: filteredData,
+              }
+            : filteredData,
         msg: "查询成功",
       });
     }, 300); // 模拟网络延迟
@@ -320,18 +323,68 @@ export function deleteRole(roleId) {
 export function changeRoleStatus(roleId, status) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
-      const role = mockRoleData.find((item) => item.roleId === roleId);
-      if (role) {
-        // 检查是否为管理员角色
-        if (role.roleKey === "admin" && status === "1") {
-          reject({
-            code: 403,
-            message: "管理员角色不能停用",
+      const roleIndex = mockRoleData.findIndex(
+        (item) => item.roleId === roleId
+      );
+
+      if (roleIndex !== -1) {
+        // 更新角色状态
+        mockRoleData[roleIndex].status = status;
+
+        // 如果角色被停用，同步更新用户角色状态
+        if (status === "1") {
+          // 导入用户数据，避免循环依赖
+          import("./mockData").then(({ mockUserData }) => {
+            // 查找使用此角色的用户
+            mockUserData.forEach((user) => {
+              if (user.roleIds.includes(roleId)) {
+                // 从用户角色列表中移除被停用的角色
+                const roleIndex = user.roleIds.indexOf(roleId);
+                if (roleIndex > -1) {
+                  // 不直接移除角色ID，而是标记为停用状态
+                  // 这样在角色重新启用时，可以恢复用户的角色
+                  user.disabledRoleIds = user.disabledRoleIds || [];
+                  if (!user.disabledRoleIds.includes(roleId)) {
+                    user.disabledRoleIds.push(roleId);
+                  }
+
+                  // 更新用户的角色名称列表
+                  const roleName = mockRoleData.find(
+                    (r) => r.roleId === roleId
+                  )?.roleName;
+                  if (roleName && user.roles.includes(roleName)) {
+                    user.roles = user.roles.filter((r) => r !== roleName);
+                  }
+                }
+              }
+            });
           });
-          return;
+        } else if (status === "0") {
+          // 如果角色被启用，恢复用户角色状态
+          import("./mockData").then(({ mockUserData }) => {
+            // 查找有此角色但被停用的用户
+            mockUserData.forEach((user) => {
+              if (
+                user.disabledRoleIds &&
+                user.disabledRoleIds.includes(roleId)
+              ) {
+                // 从停用列表中移除
+                user.disabledRoleIds = user.disabledRoleIds.filter(
+                  (id) => id !== roleId
+                );
+
+                // 更新用户的角色名称列表
+                const roleName = mockRoleData.find(
+                  (r) => r.roleId === roleId
+                )?.roleName;
+                if (roleName && !user.roles.includes(roleName)) {
+                  user.roles.push(roleName);
+                }
+              }
+            });
+          });
         }
 
-        role.status = status;
         resolve({
           code: 200,
           data: null,

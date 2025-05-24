@@ -46,19 +46,20 @@
           </el-select>
         </el-form-item>
         <el-form-item label="部门" prop="deptId">
-          <el-select
+          <el-tree-select
             v-model="queryParams.deptId"
+            :data="deptTreeOptions"
+            :props="{
+              label: 'label',
+              value: 'value',
+              children: 'children',
+              disabled: 'disabled',
+            }"
+            value-key="value"
             placeholder="请选择部门"
             clearable
             style="width: 180px"
-          >
-            <el-option
-              v-for="dept in deptOptions"
-              :key="dept.deptId"
-              :label="dept.deptName"
-              :value="dept.deptId"
-            />
-          </el-select>
+          />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleQuery">
@@ -127,6 +128,26 @@
             />
             <span v-if="!hasPermission(scope.row, 'edit')">
               {{ scope.row.status === "0" ? "正常" : "停用" }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="角色"
+          align="center"
+          width="180"
+          :show-overflow-tooltip="true"
+        >
+          <template #default="scope">
+            <el-tag
+              v-for="role in scope.row.roles"
+              :key="role"
+              size="small"
+              class="role-tag-item"
+            >
+              {{ role }}
+            </el-tag>
+            <span v-if="!scope.row.roles || scope.row.roles.length === 0">
+              未分配
             </span>
           </template>
         </el-table-column>
@@ -270,18 +291,21 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="部门" prop="deptId">
-              <el-select
+              <el-tree-select
                 v-model="userForm.deptId"
+                :data="deptTreeOptions"
+                :props="{
+                  label: 'label',
+                  value: 'value',
+                  children: 'children',
+                  disabled: 'disabled',
+                }"
+                value-key="value"
                 placeholder="请选择部门"
+                check-strictly
+                :render-after-expand="false"
                 style="width: 100%"
-              >
-                <el-option
-                  v-for="dept in deptOptions"
-                  :key="dept.deptId"
-                  :label="dept.deptName"
-                  :value="dept.deptId"
-                />
-              </el-select>
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -384,19 +408,22 @@
           </el-select>
         </el-form-item>
         <el-form-item label="权限部门" v-if="dataScopeForm.dataScope === '2'">
-          <el-select
+          <el-tree-select
             v-model="dataScopeForm.deptIds"
+            :data="deptTreeOptions"
+            :props="{
+              label: 'label',
+              value: 'value',
+              children: 'children',
+              disabled: 'disabled',
+            }"
+            value-key="value"
             multiple
             placeholder="请选择部门"
+            check-strictly
+            :render-after-expand="false"
             style="width: 100%"
-          >
-            <el-option
-              v-for="dept in deptOptions"
-              :key="dept.deptId"
-              :label="dept.deptName"
-              :value="dept.deptId"
-            />
-          </el-select>
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -406,6 +433,80 @@
             type="primary"
             @click="submitDataScope"
             :loading="submitLoading"
+          >
+            确 定
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 角色分配对话框 -->
+    <el-dialog
+      title="分配角色"
+      v-model="roleAssignVisible"
+      width="500px"
+      append-to-body
+      destroy-on-close
+    >
+      <el-form
+        ref="roleAssignFormRef"
+        :model="roleAssignForm"
+        label-width="100px"
+      >
+        <el-form-item label="用户名称">
+          <span>{{ roleAssignForm.username }}</span>
+        </el-form-item>
+        <el-form-item label="部门">
+          <span>{{ roleAssignForm.deptName }}</span>
+        </el-form-item>
+        <el-form-item label="已分配角色" prop="roleIds">
+          <el-select
+            v-model="roleAssignForm.roleIds"
+            multiple
+            placeholder="请选择角色"
+            style="width: 100%"
+            :disabled="roleAssignForm.username === 'admin'"
+          >
+            <el-option
+              v-for="role in roleOptions"
+              :key="role.roleId"
+              :label="role.roleName"
+              :value="role.roleId"
+              :disabled="role.status === '1'"
+            >
+              <span>{{ role.roleName }}</span>
+              <span
+                v-if="role.status === '1'"
+                style="color: #999; font-size: 12px"
+              >
+                (已停用)</span
+              >
+            </el-option>
+          </el-select>
+          <div class="role-info" v-if="selectedRoles.length > 0">
+            <p class="role-info-title">已选角色权限说明：</p>
+            <el-tag
+              v-for="role in selectedRoles"
+              :key="role.roleId"
+              class="role-tag"
+              :type="role.status === '0' ? '' : 'info'"
+            >
+              {{ role.roleName }}
+              <el-tooltip :content="role.remark || '无说明'" placement="top">
+                <el-icon class="role-info-icon"><InfoFilled /></el-icon>
+              </el-tooltip>
+            </el-tag>
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="roleAssignVisible = false">取 消</el-button>
+          <el-button
+            type="primary"
+            @click="submitRoleAssign"
+            :loading="submitLoading"
+            :disabled="roleAssignForm.username === 'admin'"
           >
             确 定
           </el-button>
@@ -426,6 +527,7 @@ import {
   Connection,
   Plus,
   Key,
+  InfoFilled,
 } from "@element-plus/icons-vue";
 import {
   listUsers,
@@ -436,7 +538,9 @@ import {
   updateUser,
   deleteUser,
   uploadAvatar,
+  assignUserRoles,
 } from "@/api/user";
+import { listDepartmentSelector } from "@/api/department";
 import { formRules } from "@/utils/validate";
 import { useUserStore } from "@/store";
 import {
@@ -455,6 +559,8 @@ const userList = ref([]);
 const total = ref(0);
 // 部门选项
 const deptOptions = ref([]);
+// 部门树形选项（用于下拉选择）
+const deptTreeOptions = ref([]);
 // 角色选项
 const roleOptions = ref([]);
 // 查询表单引用
@@ -534,18 +640,24 @@ const getUserList = async () => {
   }
 };
 
-// 获取部门列表
-const getDeptList = async () => {
+// 获取部门选项
+const getDeptOptions = async () => {
   try {
-    const res = await listDepartments();
-    deptOptions.value = res.data;
+    // 获取部门选择器数据（树形结构）
+    const res = await listDepartmentSelector();
+    deptTreeOptions.value = res.data;
+
+    // 获取部门列表（扁平结构，用于数据权限设置）
+    const deptRes = await listDepartments();
+    deptOptions.value = deptRes.data;
   } catch (error) {
-    console.error("获取部门列表失败:", error);
+    console.error("获取部门选项失败:", error);
+    ElMessage.error("获取部门数据失败");
   }
 };
 
 // 获取角色列表
-const getRoleList = async () => {
+const getRoleOptions = async () => {
   try {
     const res = await listRoles();
     roleOptions.value = res.data;
@@ -611,16 +723,28 @@ const resetForm = () => {
 const handleAdd = () => {
   resetForm();
   dialogTitle.value = "添加用户";
+
+  // 确保获取部门数据
+  if (deptTreeOptions.value.length === 0) {
+    getDeptOptions();
+  }
+
   dialogVisible.value = true;
-  getRoleList(); // 获取角色列表
+  getRoleOptions(); // 获取角色列表
 };
 
 // 修改用户按钮操作
 const handleEdit = (row) => {
   resetForm();
   dialogTitle.value = "修改用户";
+
+  // 确保获取部门数据
+  if (deptTreeOptions.value.length === 0) {
+    getDeptOptions();
+  }
+
   dialogVisible.value = true;
-  getRoleList(); // 获取角色列表
+  getRoleOptions(); // 获取角色列表
 
   // 填充表单数据
   Object.assign(userForm, {
@@ -636,9 +760,63 @@ const handleEdit = (row) => {
   });
 };
 
+// 角色分配对话框可见性
+const roleAssignVisible = ref(false);
+// 角色分配表单引用
+const roleAssignFormRef = ref(null);
+// 角色分配表单数据
+const roleAssignForm = reactive({
+  userId: undefined,
+  username: "",
+  deptName: "",
+  roleIds: [],
+});
+
+// 计算已选择的角色详细信息
+const selectedRoles = computed(() => {
+  return roleOptions.value.filter((role) =>
+    roleAssignForm.roleIds.includes(role.roleId)
+  );
+});
+
 // 分配角色按钮操作
 const handleRoleAssign = (row) => {
-  ElMessage.success(`分配角色：${row.username}`);
+  roleAssignForm.userId = row.userId;
+  roleAssignForm.username = row.username;
+  roleAssignForm.deptName = row.deptName;
+  roleAssignForm.roleIds = row.roleIds || [];
+
+  // 确保获取角色数据
+  if (roleOptions.value.length === 0) {
+    getRoleOptions();
+  }
+
+  roleAssignVisible.value = true;
+};
+
+// 提交角色分配
+const submitRoleAssign = async () => {
+  submitLoading.value = true;
+  try {
+    // 构建提交数据
+    const submitData = {
+      userId: roleAssignForm.userId,
+      roleIds: roleAssignForm.roleIds,
+    };
+
+    // 更新用户角色
+    await assignUserRoles(submitData);
+
+    // 刷新用户列表
+    getUserList();
+
+    ElMessage.success("角色分配成功");
+    roleAssignVisible.value = false;
+  } catch (error) {
+    ElMessage.error(error.message || "角色分配失败");
+  } finally {
+    submitLoading.value = false;
+  }
 };
 
 // 删除用户按钮操作
@@ -691,11 +869,39 @@ const submitForm = () => {
     if (valid) {
       submitLoading.value = true;
       try {
+        // 确保deptId是数字类型
+        let deptId = userForm.deptId;
+        if (typeof deptId !== "number") {
+          const numId = Number(deptId);
+          if (!isNaN(numId)) {
+            deptId = numId;
+          }
+        }
+
         // 获取部门名称
-        const dept = deptOptions.value.find(
-          (item) => item.deptId === userForm.deptId
+        let deptName = "未分配";
+
+        // 从树形结构中查找部门名称
+        const findDeptNameInTree = (tree, deptId) => {
+          for (const node of tree) {
+            if (node.value === deptId) {
+              return node.label.replace(/^[│└─\s]+/, ""); // 移除前缀符号
+            }
+            if (node.children && node.children.length) {
+              const found = findDeptNameInTree(node.children, deptId);
+              if (found) return found;
+            }
+          }
+          return null;
+        };
+
+        const deptNameFromTree = findDeptNameInTree(
+          deptTreeOptions.value,
+          deptId
         );
-        const deptName = dept ? dept.deptName : "未分配";
+        if (deptNameFromTree) {
+          deptName = deptNameFromTree;
+        }
 
         // 获取角色名称列表
         const roles = userForm.roleIds
@@ -710,6 +916,7 @@ const submitForm = () => {
         // 构建提交数据
         const submitData = {
           ...userForm,
+          deptId,
           deptName,
           roles,
         };
@@ -756,6 +963,11 @@ const handleDataScope = (row) => {
   dataScopeForm.dataScope = row.dataScope || "5";
   dataScopeForm.deptIds = row.deptIds || [];
 
+  // 确保获取部门数据
+  if (deptTreeOptions.value.length === 0) {
+    getDeptOptions();
+  }
+
   dataScopeVisible.value = true;
 };
 
@@ -763,11 +975,23 @@ const handleDataScope = (row) => {
 const submitDataScope = async () => {
   submitLoading.value = true;
   try {
+    // 如果是自定义数据权限，确保deptIds是数字类型的ID
+    let deptIds = [];
+    if (dataScopeForm.dataScope === "2") {
+      deptIds = dataScopeForm.deptIds.map((id) => {
+        // 如果是数字，直接返回
+        if (typeof id === "number") return id;
+        // 如果是字符串但可以转为数字，则转换
+        const numId = Number(id);
+        return !isNaN(numId) ? numId : id;
+      });
+    }
+
     // 构建提交数据
     const submitData = {
       userId: dataScopeForm.userId,
       dataScope: dataScopeForm.dataScope,
-      deptIds: dataScopeForm.dataScope === "2" ? dataScopeForm.deptIds : [],
+      deptIds: deptIds,
     };
 
     // 更新用户数据权限
@@ -787,7 +1011,8 @@ const submitDataScope = async () => {
 
 onMounted(() => {
   getUserList();
-  getDeptList();
+  getDeptOptions();
+  getRoleOptions();
 });
 </script>
 
@@ -831,6 +1056,36 @@ onMounted(() => {
         border-color: #409eff;
       }
     }
+  }
+
+  .role-info {
+    margin-top: 10px;
+    border-top: 1px dashed #dcdfe6;
+    padding-top: 10px;
+
+    .role-info-title {
+      font-size: 12px;
+      color: #606266;
+      margin-bottom: 8px;
+    }
+
+    .role-tag {
+      margin-right: 8px;
+      margin-bottom: 8px;
+      display: inline-flex;
+      align-items: center;
+
+      .role-info-icon {
+        margin-left: 5px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+    }
+  }
+
+  .role-tag-item {
+    margin-right: 4px;
+    margin-bottom: 4px;
   }
 }
 </style>
