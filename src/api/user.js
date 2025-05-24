@@ -296,3 +296,130 @@ export function listRoles() {
     }, 300);
   });
 }
+
+/**
+ * 创建用户
+ * @param {Object} userData - 用户数据
+ * @returns {Promise} - 返回创建结果
+ */
+export function createUser(userData) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      // 模拟创建用户，生成新的用户ID
+      const newUserId = mockUserData.length + 1;
+
+      // 构建新用户对象
+      const newUser = {
+        userId: newUserId,
+        username: userData.username,
+        nickname: userData.nickname,
+        deptName: userData.deptName || "未分配",
+        deptId: userData.deptId,
+        phone: userData.phone,
+        email: userData.email,
+        status: userData.status || "0",
+        createTime: new Date().toLocaleString(),
+        roleIds: userData.roleIds || [],
+        roles: userData.roles || [],
+        avatar: userData.avatar || "",
+      };
+
+      // 将新用户添加到模拟数据中
+      mockUserData.push(newUser);
+
+      resolve({
+        code: 200,
+        data: newUser,
+        msg: "创建成功",
+      });
+    }, 500);
+  });
+}
+
+/**
+ * 更新用户信息
+ * @param {Object} userData - 用户数据
+ * @returns {Promise} - 返回更新结果
+ */
+export function updateUser(userData) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      const index = mockUserData.findIndex(
+        (item) => item.userId === userData.userId
+      );
+
+      if (index !== -1) {
+        // 更新用户信息
+        mockUserData[index] = {
+          ...mockUserData[index],
+          ...userData,
+        };
+
+        resolve({
+          code: 200,
+          data: mockUserData[index],
+          msg: "更新成功",
+        });
+      } else {
+        reject({
+          code: 404,
+          message: "用户不存在",
+        });
+      }
+    }, 500);
+  });
+}
+
+/**
+ * 删除用户
+ * @param {number} userId - 用户ID
+ * @returns {Promise} - 返回删除结果
+ */
+export function deleteUser(userId) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const index = mockUserData.findIndex((item) => item.userId === userId);
+
+      if (index !== -1) {
+        mockUserData.splice(index, 1);
+      }
+
+      resolve({
+        code: 200,
+        data: null,
+        msg: "删除成功",
+      });
+    }, 500);
+  });
+}
+
+/**
+ * 上传用户头像
+ * @param {File} file - 头像文件
+ * @returns {Promise} - 返回上传结果
+ */
+export function uploadAvatar(file) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      // 模拟文件上传，返回随机头像URL
+      const avatarUrls = [
+        "https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png",
+        "https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png",
+        "https://cube.elemecdn.com/9/c2/f0ee8a3c7c9638a54940382568c9dpng.png",
+        "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif",
+      ];
+
+      const randomAvatar =
+        avatarUrls[Math.floor(Math.random() * avatarUrls.length)];
+
+      resolve({
+        code: 200,
+        data: {
+          url: randomAvatar,
+          filename: file.name,
+        },
+        msg: "上传成功",
+      });
+    }, 1000); // 模拟上传延迟
+  });
+}
