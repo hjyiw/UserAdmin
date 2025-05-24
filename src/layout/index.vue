@@ -24,9 +24,7 @@
             <el-icon v-if="route.meta && route.meta.icon"
               ><component :is="route.meta.icon"
             /></el-icon>
-            <template #title>{{
-              route.meta ? route.meta.title : "未命名"
-            }}</template>
+            <template #title>{{ route.meta?.title }}</template>
           </el-menu-item>
 
           <!-- 只有一个子路由的菜单项 -->
@@ -39,9 +37,7 @@
             >
               <component :is="route.children[0].meta.icon" />
             </el-icon>
-            <template #title>{{
-              route.children[0].meta ? route.children[0].meta.title : "未命名"
-            }}</template>
+            <template #title>{{ route.children[0].meta?.title }}</template>
           </el-menu-item>
 
           <!-- 有多个子路由的菜单项 -->
@@ -50,7 +46,7 @@
               <el-icon v-if="route.meta && route.meta.icon"
                 ><component :is="route.meta.icon"
               /></el-icon>
-              <span>{{ route.meta ? route.meta.title : "未命名" }}</span>
+              <span>{{ route.meta?.title }}</span>
             </template>
 
             <!-- 渲染子菜单 -->
@@ -62,9 +58,7 @@
               <el-icon v-if="child.meta && child.meta.icon"
                 ><component :is="child.meta.icon"
               /></el-icon>
-              <template #title>{{
-                child.meta ? child.meta.title : "未命名"
-              }}</template>
+              <template #title>{{ child.meta?.title }}</template>
             </el-menu-item>
           </el-sub-menu>
         </template>

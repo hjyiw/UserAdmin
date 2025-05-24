@@ -27,18 +27,25 @@ const publicRoutes = [
     path: "/",
     component: () => import("@/layout/index.vue"),
     redirect: "/dashboard",
+    meta: { hidden: true },
     children: [
-      {
-        path: "dashboard",
-        name: "Dashboard",
-        component: () => import("@/views/dashboard/index.vue"),
-        meta: { title: "首页", icon: "HomeFilled" },
-      },
       {
         path: "profile",
         name: "Profile",
         component: () => import("@/views/system/user/profile/index.vue"),
         meta: { title: "个人中心", hidden: true },
+      },
+    ],
+  },
+  {
+    path: "/dashboard",
+    component: () => import("@/layout/index.vue"),
+    children: [
+      {
+        path: "",
+        name: "Dashboard",
+        component: () => import("@/views/dashboard/index.vue"),
+        meta: { title: "首页", icon: "HomeFilled" },
       },
     ],
   },

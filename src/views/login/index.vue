@@ -59,12 +59,14 @@ const userStore = useUserStore();
 const loginFormRef = ref(null);
 const loading = ref(false);
 
+// 登录表单
 const loginForm = reactive({
   username: "",
   password: "",
   rememberMe: false,
 });
 
+// 登录规则
 const loginRules = {
   username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
   password: [{ required: true, message: "请输入密码", trigger: "blur" }],
@@ -99,7 +101,9 @@ const goToForgetPassword = () => {
 
 // 页面加载时，尝试加载保存的用户信息
 onMounted(() => {
+  // 加载保存的用户信息
   const savedUserInfo = userStore.loadSavedUserInfo();
+  //
   if (savedUserInfo) {
     loginForm.username = savedUserInfo.username;
     loginForm.password = savedUserInfo.password;
