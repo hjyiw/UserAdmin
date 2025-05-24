@@ -94,6 +94,69 @@ const mockUpdatePassword = (oldPassword, newPassword) => {
   });
 };
 
+// 模拟发送重置密码邮件API调用
+const mockSendResetEmail = (email) => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      // 模拟验证邮箱
+      if (email && email.includes("@")) {
+        resolve({
+          code: 200,
+          data: null,
+          msg: "重置密码邮件已发送，请查收",
+        });
+      } else {
+        reject({
+          code: 400,
+          message: "邮箱格式不正确",
+        });
+      }
+    }, 800);
+  });
+};
+
+// 模拟重置密码API调用
+const mockResetPassword = (resetInfo) => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      const { token, password, confirmPassword } = resetInfo;
+
+      // 验证重置token
+      if (!token || token.length < 10) {
+        reject({
+          code: 400,
+          message: "重置链接无效或已过期",
+        });
+        return;
+      }
+
+      // 验证密码一致性
+      if (password !== confirmPassword) {
+        reject({
+          code: 400,
+          message: "两次输入的密码不一致",
+        });
+        return;
+      }
+
+      // 验证密码长度
+      if (password.length < 6) {
+        reject({
+          code: 400,
+          message: "密码长度不能小于6位",
+        });
+        return;
+      }
+
+      resolve({
+        code: 200,
+        data: null,
+        msg: "密码重置成功，请使用新密码登录",
+      });
+    }, 800);
+  });
+};
+
 export const useUserStore = defineStore("user", {
   state: () => ({
     token: getToken(),
@@ -192,36 +255,53 @@ export const useUserStore = defineStore("user", {
       });
     },
 
+    // 发送重置密码邮件
+    sendResetEmail(email) {
+      return new Promise((resolve, reject) => {
+        mockSendResetEmail(email)
+          .then((response) => {
+            resolve(response);
+          })
+          .catch((error) => {
+            reject(error);
+          });
+      });
+    },
+
+    // 重置密码
+    resetPassword(resetInfo) {
+      return new Promise((resolve, reject) => {
+        mockResetPassword(resetInfo)
+          .then((response) => {
+            resolve(response);
+          })
+          .catch((error) => {
+            reject(error);
+          });
+      });
+    },
+
     // 退出登录
     logout() {
       return new Promise((resolve, reject) => {
-        // 调用退出登录API
         mockLogout()
           .then(() => {
             this.clearUserState();
             resolve();
           })
           .catch((error) => {
-            // 即使API调用失败，也清除本地状态
-            console.error("退出登录失败，但仍会清除本地状态:", error);
-            this.clearUserState();
-            resolve();
+            reject(error);
           });
       });
     },
 
     // 清除用户状态
     clearUserState() {
-      // 判断是否需要保留用户凭据（记住密码）
-      if (!this.rememberMe) {
-        // 如果没有记住密码，清除所有登录信息
-        clearLoginInfo();
-      } else {
-        // 如果记住密码，只清除token
-        removeToken();
-      }
-
+      // 清除token
       this.token = "";
+      removeToken();
+
+      // 清除用户信息
       this.userInfo = {};
       this.roles = [];
       this.permissions = [];
@@ -230,18 +310,26 @@ export const useUserStore = defineStore("user", {
       const permissionStore = usePermissionStore();
       permissionStore.resetRoutes();
 
-      // 跳转到登录页
+      // 重定向到登录页
       router.push("/login");
     },
 
     // 重置token
     resetToken() {
       return new Promise((resolve) => {
-        removeToken();
+        // 清除token
         this.token = "";
+        removeToken();
+
+        // 清除用户信息
         this.userInfo = {};
         this.roles = [];
         this.permissions = [];
+
+        // 重置路由
+        const permissionStore = usePermissionStore();
+        permissionStore.resetRoutes();
+
         resolve();
       });
     },

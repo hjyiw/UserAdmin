@@ -31,6 +31,9 @@
 
       <div class="remember-container">
         <el-checkbox v-model="loginForm.rememberMe">记住密码</el-checkbox>
+        <el-link type="primary" :underline="false" @click="goToForgetPassword"
+          >忘记密码?</el-link
+        >
       </div>
 
       <el-button
@@ -87,6 +90,11 @@ const handleLogin = () => {
       }
     }
   });
+};
+
+// 跳转到忘记密码页面
+const goToForgetPassword = () => {
+  router.push("/forget");
 };
 
 // 页面加载时，尝试加载保存的用户信息
