@@ -80,7 +80,10 @@
               />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="handleUpdateProfile"
+              <el-button
+                type="primary"
+                :loading="loading"
+                @click="handleUpdateProfile"
                 >保存</el-button
               >
             </el-form-item>
@@ -98,11 +101,13 @@
 import { ref, reactive, computed, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import { useUserStore } from "@/store";
+import { updateProfile } from "@/api/user";
 import PasswordForm from "./password.vue";
 
 const userStore = useUserStore();
 const activeTab = ref("basic");
 const profileFormRef = ref(null);
+const loading = ref(false);
 
 // 用户信息
 const userInfo = computed(() => userStore.userInfo);
@@ -149,7 +154,23 @@ onMounted(() => {
 const handleUpdateProfile = () => {
   profileFormRef.value.validate((valid) => {
     if (valid) {
-      ElMessage.success("个人资料修改成功");
+      loading.value = true;
+
+      // 调用API更新个人资料
+      updateProfile({
+        nickname: profileForm.nickname,
+        email: profileForm.email,
+        phone: profileForm.phone,
+      })
+        .then((response) => {
+          ElMessage.success(response.msg || "个人资料修改成功");
+        })
+        .catch((error) => {
+          ElMessage.error(error.message || "个人资料修改失败");
+        })
+        .finally(() => {
+          loading.value = false;
+        });
     }
   });
 };

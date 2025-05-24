@@ -348,3 +348,57 @@ export function uploadAvatar(file) {
     }, 1000); // 模拟上传延迟
   });
 }
+
+/**
+ * 更新个人资料
+ * @param {Object} profileData - 个人资料数据
+ * @returns {Promise} - 返回更新结果
+ */
+export function updateProfile(profileData) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      // 获取当前登录用户ID（通常从store或localStorage获取）
+      // 这里模拟从store获取
+      import("@/store").then(({ useUserStore }) => {
+        const userStore = useUserStore();
+        const userId = userStore.userInfo.userId;
+
+        if (!userId) {
+          reject({
+            code: 401,
+            message: "未登录或登录已过期",
+          });
+          return;
+        }
+
+        // 查找用户
+        const index = mockUserData.findIndex((item) => item.userId === userId);
+
+        if (index !== -1) {
+          // 更新用户信息
+          mockUserData[index] = {
+            ...mockUserData[index],
+            ...profileData,
+          };
+
+          // 同步更新store中的用户信息
+          userStore.userInfo = {
+            ...userStore.userInfo,
+            ...profileData,
+          };
+
+          resolve({
+            code: 200,
+            data: mockUserData[index],
+            msg: "个人资料更新成功",
+          });
+        } else {
+          reject({
+            code: 404,
+            message: "用户不存在",
+          });
+        }
+      });
+    }, 500);
+  });
+}
