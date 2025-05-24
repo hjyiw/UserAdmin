@@ -106,5 +106,10 @@ export const usePermissionStore = defineStore("permission", {
         remainingRoutes.map((r) => r.path)
       );
     },
+
+    // 清除路由 (别名方法，与resetRoutes功能相同)
+    clearRoutes() {
+      this.resetRoutes();
+    },
   },
 });

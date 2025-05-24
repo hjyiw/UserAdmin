@@ -14,6 +14,7 @@ import {
 } from "@/utils/auth";
 import { usePermissionStore } from "./permission";
 import router from "@/router";
+import { DATA_SCOPE_TYPES } from "@/utils/permission";
 
 // 模拟API调用
 const mockLogin = (username, password) => {
@@ -187,6 +188,18 @@ export const useUserStore = defineStore("user", {
     getDeptIds: (state) => state.deptIds,
     // 判断是否有指定数据权限
     hasDataScope: (state) => (scopeType) => state.dataScope === scopeType,
+    // 判断是否有全部数据权限
+    hasAllDataScope: (state) =>
+      state.dataScope === DATA_SCOPE_TYPES.ALL || state.roles.includes("admin"),
+    // 判断是否有自定义数据权限
+    hasCustomDataScope: (state) => state.dataScope === DATA_SCOPE_TYPES.CUSTOM,
+    // 判断是否有部门数据权限
+    hasDeptDataScope: (state) => state.dataScope === DATA_SCOPE_TYPES.DEPT,
+    // 判断是否有部门及以下数据权限
+    hasDeptAndChildDataScope: (state) =>
+      state.dataScope === DATA_SCOPE_TYPES.DEPT_AND_CHILD,
+    // 判断是否有仅本人数据权限
+    hasSelfDataScope: (state) => state.dataScope === DATA_SCOPE_TYPES.SELF,
   },
 
   actions: {
@@ -231,19 +244,20 @@ export const useUserStore = defineStore("user", {
             const { data } = response;
             const { user } = data;
 
-            // 验证返回的用户信息是否包含角色信息
-            if (!user.roles || user.roles.length <= 0) {
-              reject("用户角色不能为空");
+            if (!user) {
+              reject("获取用户信息失败，请重新登录");
               return;
             }
 
-            // 保存用户信息
+            // 设置用户信息
             this.userInfo = user;
-            this.roles = user.roles;
-            this.permissions = user.permissions;
-
-            // 保存数据权限信息
-            this.dataScope = user.dataScope || "5"; // 默认为仅本人
+            // 设置角色
+            this.roles = user.roles || [];
+            // 设置权限
+            this.permissions = user.permissions || [];
+            // 设置数据权限
+            this.dataScope = user.dataScope || DATA_SCOPE_TYPES.SELF;
+            // 设置自定义权限部门列表
             this.deptIds = user.deptIds || [];
 
             resolve(data);
@@ -317,23 +331,21 @@ export const useUserStore = defineStore("user", {
     clearUserState() {
       // 清除token
       this.token = "";
-      removeToken();
-
       // 清除用户信息
       this.userInfo = {};
+      // 清除角色
       this.roles = [];
+      // 清除权限
       this.permissions = [];
-
-      // 清除数据权限信息
-      this.dataScope = "5";
+      // 清除数据权限
+      this.dataScope = DATA_SCOPE_TYPES.SELF;
+      // 清除自定义权限部门列表
       this.deptIds = [];
-
-      // 重置路由
+      // 清除本地存储的token
+      removeToken();
+      // 清除路由
       const permissionStore = usePermissionStore();
-      permissionStore.resetRoutes();
-
-      // 重定向到登录页
-      router.push("/login");
+      permissionStore.clearRoutes();
     },
 
     // 重置token
