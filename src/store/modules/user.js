@@ -18,15 +18,36 @@ import { DATA_SCOPE_TYPES } from "@/utils/permission";
 
 // 模拟API调用
 const mockLogin = (username, password) => {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     setTimeout(() => {
-      // 模拟登录成功返回token
-      resolve({
-        code: 200,
-        data: {
-          token: "admin-token-" + new Date().getTime(),
-        },
-        msg: "登录成功",
+      // 导入用户数据
+      import("@/api/mockData").then(({ mockUserData }) => {
+        // 查找用户
+        const user = mockUserData.find(
+          (u) => u.username === username && u.status === "0"
+        );
+
+        if (!user) {
+          reject({ code: 401, message: "用户名不存在或已被禁用" });
+          return;
+        }
+
+        // 这里简单模拟密码验证，实际应用中应该进行加密比对
+        // 为了演示方便，假设所有用户的初始密码都是123456
+        if (password !== "123456") {
+          reject({ code: 401, message: "密码错误" });
+          return;
+        }
+
+        // 登录成功
+        resolve({
+          code: 200,
+          data: {
+            token: `${username}-token-${new Date().getTime()}`,
+            userId: user.userId,
+          },
+          msg: "登录成功",
+        });
       });
     }, 500);
   });
@@ -34,34 +55,55 @@ const mockLogin = (username, password) => {
 
 // 模拟获取用户信息API调用
 const mockGetUserInfo = () => {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     setTimeout(() => {
-      // 模拟获取用户信息
-      resolve({
-        code: 200,
-        data: {
-          user: {
-            id: 1,
-            userId: 1,
-            username: "admin",
-            nickname: "管理员",
-            avatar:
-              "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif",
-            email: "admin@example.com",
-            deptId: 1,
-            deptName: "研发部门",
-            deptPath: "0,1",
-            roles: ["admin"], // 用户角色
-            permissions: [
-              "system:user:list", // 用户管理
-              "system:role:list", // 角色管理
-              "system:dept:list", // 部门管理
-            ], // 用户权限
-            dataScope: DATA_SCOPE_TYPES.ALL, // 全部数据权限
-            deptIds: [1, 2, 3, 4, 5, 6, 7, 8, 9], // 用户可访问的部门范围
+      // 从token中获取用户名
+      const token = getToken();
+      if (!token) {
+        reject({ code: 401, message: "未登录或登录已过期" });
+        return;
+      }
+
+      // 解析token中的用户名
+      const username = token.split("-")[0];
+
+      // 导入用户数据
+      import("@/api/mockData").then(({ mockUserData }) => {
+        // 查找用户
+        const user = mockUserData.find((u) => u.username === username);
+
+        if (!user) {
+          reject({ code: 404, message: "用户不存在" });
+          return;
+        }
+
+        // 获取成功
+        resolve({
+          code: 200,
+          data: {
+            user: {
+              id: user.userId,
+              userId: user.userId,
+              username: user.username,
+              nickname: user.nickname,
+              avatar:
+                "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif",
+              email: user.email,
+              deptId: user.deptId,
+              deptName: user.deptName,
+              deptPath: user.deptPath,
+              roles: user.roles, // 用户角色
+              permissions: user.roleIds.includes(3)
+                ? ["system:user:list", "system:role:list"] // 开发人员权限
+                : user.roleIds.includes(1)
+                ? ["system:user:list", "system:role:list", "system:dept:list"] // 管理员权限
+                : ["system:user:list"], // 其他角色权限
+              dataScope: user.dataScope, // 数据权限
+              deptIds: user.deptIds, // 用户可访问的部门范围
+            },
           },
-        },
-        msg: "获取成功",
+          msg: "获取成功",
+        });
       });
     }, 500);
   });

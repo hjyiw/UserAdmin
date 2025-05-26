@@ -6,19 +6,19 @@ import router from "@/router"; // 导入router实例
 /**
  * 过滤路由
  * @param {Array} routes - 路由
- * @param {Array} permissions - 权限
+ * @param {Array} roles - 用户角色
  * @returns {Array} - 返回 可访问路由
  */
-function filterAsyncRoutes(routes, permissions) {
+function filterAsyncRoutes(routes, roles) {
   const res = [];
 
   routes.forEach((route) => {
     const tmp = { ...route }; // 深拷贝当前路由对象
     // 检查是否有权限访问该路由
-    if (hasPermission(permissions, tmp)) {
+    if (hasRolePermission(roles, tmp)) {
       // 如果有子路由，递归过滤
       if (tmp.children) {
-        tmp.children = filterAsyncRoutes(tmp.children, permissions);
+        tmp.children = filterAsyncRoutes(tmp.children, roles);
       }
       res.push(tmp);
     }
@@ -27,37 +27,39 @@ function filterAsyncRoutes(routes, permissions) {
   return res;
 }
 
-// 判断是否有权限
 /**
- * 判断是否有权限
- * @param {Array} permissions - 权限
+ * 判断角色是否有权限
+ * @param {Array} roles - 用户角色
  * @param {Object} route - 路由
  * @returns {Boolean} - 返回 是否可访问
  */
-function hasPermission(permissions, route) {
-  // 如果路由没有设置权限要求，则默认可访问
-  if (!route.meta || !route.meta.permissions) {
+function hasRolePermission(roles, route) {
+  // 如果路由没有设置meta，则默认可访问
+  if (!route.meta) {
     return true;
   }
 
-  // 判断用户权限是否包含路由所需权限
-  return permissions.some((permission) =>
-    route.meta.permissions.includes(permission)
-  );
+  // 如果路由没有设置roles，则默认可访问
+  if (!route.meta.roles) {
+    return true;
+  }
+
+  // 判断用户角色是否有权限访问
+  return roles.some((role) => route.meta.roles.includes(role));
 }
 
 export const usePermissionStore = defineStore("permission", {
   state: () => ({
     routes: [], // 所有路由
     addRoutes: [], // 动态路由
-    permissions: [], // 用户权限
+    roles: [], // 用户角色
   }),
 
   getters: {
     // 获取所有路由
     getRoutes: (state) => state.routes,
-    // 获取用户权限
-    getPermissions: (state) => state.permissions,
+    // 获取用户角色
+    getRoles: (state) => state.roles,
   },
 
   actions: {
@@ -67,29 +69,29 @@ export const usePermissionStore = defineStore("permission", {
       this.routes = publicRoutes.concat(routes); // 合并公共路由和动态路由
     },
 
-    // 设置权限
-    setPermissions(permissions) {
-      this.permissions = permissions; // 设置用户权限
+    // 设置角色
+    setRoles(roles) {
+      this.roles = roles; // 设置用户角色
     },
 
     /**
      * 生成路由
-     * @param {Array} permissions - 用户权限
+     * @param {Array} permissions - 用户权限（为了保持接口兼容，不使用）
      * @param {Array} roles - 用户角色
      * @returns {Promise} - 返回 可访问路由
      */
     generateRoutes(permissions, roles) {
       return new Promise((resolve) => {
-        // 保存权限
-        this.setPermissions(permissions);
+        // 保存角色
+        this.setRoles(roles);
 
         let accessedRoutes;
-        // 如果用户拥有admin角色，可以访问所有路由
-        if (roles.includes("admin")) {
+        // 如果用户拥有管理员角色，可以访问所有路由
+        if (roles.includes("管理员")) {
           accessedRoutes = permissionRoutes || [];
         } else {
-          // 根据权限过滤路由
-          accessedRoutes = filterAsyncRoutes(permissionRoutes, permissions);
+          // 根据角色过滤路由
+          accessedRoutes = filterAsyncRoutes(permissionRoutes, roles);
         }
 
         // 设置路由
@@ -106,7 +108,7 @@ export const usePermissionStore = defineStore("permission", {
       // 清空状态
       this.routes = [];
       this.addRoutes = [];
-      this.permissions = [];
+      this.roles = [];
 
       // 从路由实例中移除动态添加的路由
       currentRoutes.forEach((route) => {

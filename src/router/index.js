@@ -72,7 +72,7 @@ const permissionRoutes = [
     meta: {
       title: "系统管理",
       icon: "Setting",
-      permissions: ["system:view"],
+      roles: ["管理员", "开发人员", "测试人员"], // 允许访问的角色
     },
     children: [
       // 用户管理
@@ -83,7 +83,7 @@ const permissionRoutes = [
         meta: {
           title: "用户管理",
           icon: "User",
-          permissions: ["system:user:list"],
+          roles: ["管理员", "开发人员", "测试人员"], // 允许访问的角色
         },
       },
       // 角色管理
@@ -94,7 +94,7 @@ const permissionRoutes = [
         meta: {
           title: "角色管理",
           icon: "UserFilled",
-          permissions: ["system:role:list"],
+          roles: ["管理员", "开发人员"], // 允许访问的角色
         },
       },
       // 部门管理
@@ -105,7 +105,7 @@ const permissionRoutes = [
         meta: {
           title: "部门管理",
           icon: "OfficeBuilding",
-          permissions: ["system:dept:list"],
+          roles: ["管理员"], // 只允许管理员访问
         },
       },
     ],
@@ -149,13 +149,13 @@ router.beforeEach(async (to, from, next) => {
           console.log(
             "User info loaded:",
             user.username, // 用户名
-            "| Permissions:",
-            user.permissions // 用户权限
+            "| Roles:",
+            user.roles // 用户角色
           );
 
-          // 根据用户权限生成可访问路由
+          // 根据用户角色生成可访问路由
           const accessRoutes = await permissionStore.generateRoutes(
-            user.permissions,
+            [], // 不再使用permissions参数
             user.roles
           );
 
@@ -204,7 +204,7 @@ router.beforeEach(async (to, from, next) => {
           // 重新获取路由配置
           const permissionStore = usePermissionStore();
           const accessRoutes = await permissionStore.generateRoutes(
-            userStore.permissions,
+            [], // 不再使用permissions参数
             userStore.roles
           );
 

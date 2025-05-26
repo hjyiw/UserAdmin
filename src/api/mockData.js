@@ -1,5 +1,5 @@
 // 模拟数据文件 - 存储部门和用户的初始数据
-
+import { DATA_SCOPE_TYPES } from "@/utils/permission";
 // 模拟部门数据
 export const mockDeptData = [
   {
@@ -140,9 +140,9 @@ export const mockUserData = [
     status: "0",
     createTime: "2023-01-01 12:00:00",
     createBy: 1,
-    roleIds: [1],
+    roleIds: [1], // 管理员角色
     roles: ["管理员"],
-    dataScope: "1", // 全部数据权限
+    dataScope: DATA_SCOPE_TYPES.ALL, // 全部数据权限
     deptIds: validDeptIds, // 自定义权限部门列表
   },
   {
@@ -159,7 +159,7 @@ export const mockUserData = [
     createBy: 1,
     roleIds: [2],
     roles: ["测试人员"],
-    dataScope: "3", // 本部门数据权限
+    dataScope: DATA_SCOPE_TYPES.DEPT, // 本部门数据权限
     deptIds: [2],
   },
   {
@@ -176,7 +176,7 @@ export const mockUserData = [
     createBy: 1,
     roleIds: [3],
     roles: ["开发人员"],
-    dataScope: "4", // 本部门及以下数据权限
+    dataScope: DATA_SCOPE_TYPES.DEPT_AND_CHILD, // 本部门及以下数据权限
     deptIds: [5],
   },
   {
@@ -193,7 +193,7 @@ export const mockUserData = [
     createBy: 1,
     roleIds: [4],
     roles: ["项目经理"],
-    dataScope: "2", // 自定义数据权限
+    dataScope: DATA_SCOPE_TYPES.CUSTOM, // 自定义数据权限
     deptIds: [6, 5],
   },
   {
@@ -210,7 +210,7 @@ export const mockUserData = [
     createBy: 1,
     roleIds: [5],
     roles: ["市场人员"],
-    dataScope: "5", // 仅本人数据权限
+    dataScope: DATA_SCOPE_TYPES.SELF, // 仅本人数据权限
     deptIds: [],
   },
   {
@@ -227,7 +227,7 @@ export const mockUserData = [
     createBy: 1,
     roleIds: [6],
     roles: ["财务人员"],
-    dataScope: "5", // 仅本人数据权限
+    dataScope: DATA_SCOPE_TYPES.SELF, // 仅本人数据权限
     deptIds: [],
   },
   {
@@ -244,7 +244,7 @@ export const mockUserData = [
     createBy: 1,
     roleIds: [7],
     roles: ["人事专员"],
-    dataScope: "3", // 本部门数据权限
+    dataScope: DATA_SCOPE_TYPES.DEPT, // 本部门数据权限
     deptIds: [3],
   },
   {
@@ -261,25 +261,25 @@ export const mockUserData = [
     createBy: 1,
     roleIds: [8],
     roles: ["运维人员"],
-    dataScope: "3", // 本部门数据权限
+    dataScope: DATA_SCOPE_TYPES.DEPT, // 本部门数据权限
     deptIds: [4],
   },
   {
     userId: 9,
-    username: "security",
-    nickname: "安全工程师",
-    deptId: 8,
-    deptName: "财务部门",
-    deptPath: "0,8",
-    phone: "13800138008",
-    email: "security@example.com",
-    status: "0",
-    createTime: "2023-01-09 12:00:00",
+    username: "developer",
+    nickname: "后端开发",
+    deptId: 6,
+    deptName: "后端组",
+    deptPath: "0,1,2,6",
+    phone: "13800138009",
+    email: "developer@example.com",
+    status: "0", // 正常状态
+    createTime: "2023-05-15 10:30:00",
     createBy: 1,
-    roleIds: [9],
-    roles: ["安全人员"],
-    dataScope: "3", // 本部门数据权限
-    deptIds: [8],
+    roleIds: [3], // 开发人员角色
+    roles: ["开发人员"],
+    dataScope: DATA_SCOPE_TYPES.DEPT, // 本部门数据权限
+    deptIds: [6],
   },
   {
     userId: 10,
@@ -295,7 +295,7 @@ export const mockUserData = [
     createBy: 1,
     roleIds: [10],
     roles: ["产品经理"],
-    dataScope: "3", // 本部门数据权限
+    dataScope: DATA_SCOPE_TYPES.DEPT, // 本部门数据权限
     deptIds: [1],
   },
 ];
