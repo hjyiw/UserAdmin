@@ -124,11 +124,7 @@
               :active-value="'0'"
               :inactive-value="'1'"
               @change="handleStatusChange(scope.row)"
-              v-data-perm="{ resource: scope.row, action: 'edit' }"
             />
-            <span v-if="!hasPermission(scope.row, 'edit')">
-              {{ scope.row.status === "0" ? "正常" : "停用" }}
-            </span>
           </template>
         </el-table-column>
         <el-table-column
@@ -152,30 +148,6 @@
           </template>
         </el-table-column>
         <el-table-column
-          label="数据权限"
-          align="center"
-          width="120"
-          :show-overflow-tooltip="true"
-        >
-          <template #default="scope">
-            <el-tag v-if="scope.row.dataScope === '1'" type="success"
-              >全部</el-tag
-            >
-            <el-tag v-else-if="scope.row.dataScope === '2'" type="warning"
-              >自定义</el-tag
-            >
-            <el-tag v-else-if="scope.row.dataScope === '3'" type="info"
-              >本部门</el-tag
-            >
-            <el-tag v-else-if="scope.row.dataScope === '4'" type="primary"
-              >本部门及以下</el-tag
-            >
-            <el-tag v-else-if="scope.row.dataScope === '5'" type="danger"
-              >仅本人</el-tag
-            >
-          </template>
-        </el-table-column>
-        <el-table-column
           label="创建时间"
           align="center"
           prop="createTime"
@@ -184,36 +156,13 @@
         />
         <el-table-column label="操作" align="center" width="300">
           <template #default="scope">
-            <el-button
-              type="primary"
-              link
-              @click="handleEdit(scope.row)"
-              v-data-perm="{ resource: scope.row, action: 'edit' }"
-            >
+            <el-button type="primary" link @click="handleEdit(scope.row)">
               <el-icon><Edit /></el-icon> 修改
             </el-button>
-            <el-button
-              type="success"
-              link
-              @click="handleRoleAssign(scope.row)"
-              v-data-perm="{ resource: scope.row, action: 'edit' }"
-            >
+            <el-button type="success" link @click="handleRoleAssign(scope.row)">
               <el-icon><Connection /></el-icon> 分配角色
             </el-button>
-            <el-button
-              type="warning"
-              link
-              @click="handleDataScope(scope.row)"
-              v-data-perm="{ resource: scope.row, action: 'edit' }"
-            >
-              <el-icon><Key /></el-icon> 数据权限
-            </el-button>
-            <el-button
-              type="danger"
-              link
-              @click="handleDelete(scope.row)"
-              v-data-perm="{ resource: scope.row, action: 'delete' }"
-            >
+            <el-button type="danger" link @click="handleDelete(scope.row)">
               <el-icon><Delete /></el-icon> 删除
             </el-button>
           </template>
@@ -375,71 +324,6 @@
       </template>
     </el-dialog>
 
-    <!-- 数据权限设置对话框 -->
-    <el-dialog
-      title="数据权限设置"
-      v-model="dataScopeVisible"
-      width="500px"
-      append-to-body
-      destroy-on-close
-    >
-      <el-form
-        ref="dataScopeFormRef"
-        :model="dataScopeForm"
-        label-width="100px"
-      >
-        <el-form-item label="用户名称">
-          <span>{{ dataScopeForm.username }}</span>
-        </el-form-item>
-        <el-form-item label="部门">
-          <span>{{ dataScopeForm.deptName }}</span>
-        </el-form-item>
-        <el-form-item label="数据权限" prop="dataScope">
-          <el-select
-            v-model="dataScopeForm.dataScope"
-            placeholder="请选择数据权限"
-            style="width: 100%"
-          >
-            <el-option label="全部数据权限" value="1" />
-            <el-option label="自定义数据权限" value="2" />
-            <el-option label="本部门数据权限" value="3" />
-            <el-option label="本部门及以下数据权限" value="4" />
-            <el-option label="仅本人数据权限" value="5" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="权限部门" v-if="dataScopeForm.dataScope === '2'">
-          <el-tree-select
-            v-model="dataScopeForm.deptIds"
-            :data="deptTreeOptions"
-            :props="{
-              label: 'label',
-              value: 'value',
-              children: 'children',
-              disabled: 'disabled',
-            }"
-            value-key="value"
-            multiple
-            placeholder="请选择部门"
-            check-strictly
-            :render-after-expand="false"
-            style="width: 100%"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="dataScopeVisible = false">取 消</el-button>
-          <el-button
-            type="primary"
-            @click="submitDataScope"
-            :loading="submitLoading"
-          >
-            确 定
-          </el-button>
-        </div>
-      </template>
-    </el-dialog>
-
     <!-- 角色分配对话框 -->
     <el-dialog
       title="分配角色"
@@ -543,11 +427,6 @@ import {
 import { listDepartmentSelector } from "@/api/department";
 import { formRules } from "@/utils/validate";
 import { useUserStore } from "@/store";
-import {
-  checkDataPermission,
-  filterDataByPermission,
-  DATA_SCOPE_TYPES,
-} from "@/utils/permission";
 
 // 加载状态
 const loading = ref(false);
@@ -611,20 +490,7 @@ const userRules = reactive({
 });
 
 // 根据数据权限过滤后的用户列表
-const filteredUserList = computed(() => {
-  // 如果是管理员，显示所有数据
-  if (userStore.roles.includes("admin")) {
-    return userList.value;
-  }
-
-  // 根据数据权限过滤用户列表
-  return filterDataByPermission(userList.value);
-});
-
-// 检查是否有指定资源的操作权限
-const hasPermission = (resource, action) => {
-  return checkDataPermission(resource, action);
-};
+const filteredUserList = computed(() => userList.value);
 
 // 获取用户列表
 const getUserList = async () => {
@@ -940,73 +806,6 @@ const submitForm = () => {
       }
     }
   });
-};
-
-// 数据权限对话框可见性
-const dataScopeVisible = ref(false);
-// 数据权限表单引用
-const dataScopeFormRef = ref(null);
-// 数据权限表单数据
-const dataScopeForm = reactive({
-  userId: undefined,
-  username: "",
-  deptName: "",
-  dataScope: "5", // 默认仅本人
-  deptIds: [],
-});
-
-// 处理数据权限设置
-const handleDataScope = (row) => {
-  dataScopeForm.userId = row.userId;
-  dataScopeForm.username = row.username;
-  dataScopeForm.deptName = row.deptName;
-  dataScopeForm.dataScope = row.dataScope || "5";
-  dataScopeForm.deptIds = row.deptIds || [];
-
-  // 确保获取部门数据
-  if (deptTreeOptions.value.length === 0) {
-    getDeptOptions();
-  }
-
-  dataScopeVisible.value = true;
-};
-
-// 提交数据权限设置
-const submitDataScope = async () => {
-  submitLoading.value = true;
-  try {
-    // 如果是自定义数据权限，确保deptIds是数字类型的ID
-    let deptIds = [];
-    if (dataScopeForm.dataScope === "2") {
-      deptIds = dataScopeForm.deptIds.map((id) => {
-        // 如果是数字，直接返回
-        if (typeof id === "number") return id;
-        // 如果是字符串但可以转为数字，则转换
-        const numId = Number(id);
-        return !isNaN(numId) ? numId : id;
-      });
-    }
-
-    // 构建提交数据
-    const submitData = {
-      userId: dataScopeForm.userId,
-      dataScope: dataScopeForm.dataScope,
-      deptIds: deptIds,
-    };
-
-    // 更新用户数据权限
-    await updateUser(submitData);
-
-    // 刷新用户列表
-    getUserList();
-
-    ElMessage.success("数据权限设置成功");
-    dataScopeVisible.value = false;
-  } catch (error) {
-    ElMessage.error(error.message || "数据权限设置失败");
-  } finally {
-    submitLoading.value = false;
-  }
 };
 
 onMounted(() => {

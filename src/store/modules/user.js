@@ -14,7 +14,6 @@ import {
 } from "@/utils/auth";
 import { usePermissionStore } from "./permission";
 import router from "@/router";
-import { DATA_SCOPE_TYPES } from "@/utils/permission";
 
 // 模拟API调用
 const mockLogin = (username, password) => {
@@ -98,8 +97,6 @@ const mockGetUserInfo = () => {
                 : user.roleIds.includes(1)
                 ? ["system:user:list", "system:role:list", "system:dept:list"] // 管理员权限
                 : ["system:user:list"], // 其他角色权限
-              dataScope: user.dataScope, // 数据权限
-              deptIds: user.deptIds, // 用户可访问的部门范围
             },
           },
           msg: "获取成功",
@@ -214,8 +211,6 @@ export const useUserStore = defineStore("user", {
     roles: [], // 用户角色
     permissions: [], // 用户权限
     rememberMe: getRememberMe() || false, // 记住我状态
-    dataScope: "5", // 默认数据权限为仅本人
-    deptIds: [], // 自定义权限部门列表
   }),
 
   getters: {
@@ -225,24 +220,6 @@ export const useUserStore = defineStore("user", {
     getPermissions: (state) => state.permissions,
     // 获取记住我状态
     getRememberMe: (state) => state.rememberMe,
-    // 获取数据权限
-    getDataScope: (state) => state.dataScope,
-    // 获取自定义权限部门列表
-    getDeptIds: (state) => state.deptIds,
-    // 判断是否有指定数据权限
-    hasDataScope: (state) => (scopeType) => state.dataScope === scopeType,
-    // 判断是否有全部数据权限
-    hasAllDataScope: (state) =>
-      state.dataScope === DATA_SCOPE_TYPES.ALL || state.roles.includes("admin"),
-    // 判断是否有自定义数据权限
-    hasCustomDataScope: (state) => state.dataScope === DATA_SCOPE_TYPES.CUSTOM,
-    // 判断是否有部门数据权限
-    hasDeptDataScope: (state) => state.dataScope === DATA_SCOPE_TYPES.DEPT,
-    // 判断是否有部门及以下数据权限
-    hasDeptAndChildDataScope: (state) =>
-      state.dataScope === DATA_SCOPE_TYPES.DEPT_AND_CHILD,
-    // 判断是否有仅本人数据权限
-    hasSelfDataScope: (state) => state.dataScope === DATA_SCOPE_TYPES.SELF,
   },
 
   actions: {
@@ -300,10 +277,6 @@ export const useUserStore = defineStore("user", {
             this.roles = user.roles || [];
             // 设置权限
             this.permissions = user.permissions || [];
-            // 设置数据权限
-            this.dataScope = user.dataScope || DATA_SCOPE_TYPES.SELF;
-            // 设置自定义权限部门列表
-            this.deptIds = user.deptIds || [];
 
             resolve(data);
           })
@@ -382,10 +355,6 @@ export const useUserStore = defineStore("user", {
       this.roles = [];
       // 清除权限
       this.permissions = [];
-      // 清除数据权限
-      this.dataScope = DATA_SCOPE_TYPES.SELF;
-      // 清除自定义权限部门列表
-      this.deptIds = [];
       // 清除本地存储的token
       removeToken();
       // 清除路由
@@ -404,10 +373,6 @@ export const useUserStore = defineStore("user", {
         this.userInfo = {};
         this.roles = [];
         this.permissions = [];
-
-        // 清除数据权限信息
-        this.dataScope = "5";
-        this.deptIds = [];
 
         // 重置路由
         const permissionStore = usePermissionStore();

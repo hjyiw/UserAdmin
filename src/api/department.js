@@ -1,11 +1,10 @@
 // 部门管理相关API
-import { DATA_SCOPE_TYPES } from "@/utils/permission";
+// import { DATA_SCOPE_TYPES } from "@/utils/permission";
 import { mockDeptData, flatDeptData, mockUserData } from "@/api/mockData";
 
 // 模拟当前用户权限数据
 const currentUserPermissions = {
   roles: ["admin"],
-  dataScope: DATA_SCOPE_TYPES.ALL,
   deptId: 1,
   deptIds: [],
 };
@@ -72,28 +71,6 @@ export function listDepartment(params, userInfo = currentUserPermissions) {
 
         // 重建树形结构
         result = buildDeptTree(filtered);
-      }
-
-      // 应用数据权限过滤
-      if (!userInfo.roles.includes("admin")) {
-        const dataScope = userInfo.dataScope || DATA_SCOPE_TYPES.SELF;
-        const userDeptId = userInfo.deptId;
-
-        if (dataScope === DATA_SCOPE_TYPES.DEPT) {
-          // 本部门数据权限
-          result = filterDeptByDeptId(result, userDeptId);
-        } else if (dataScope === DATA_SCOPE_TYPES.DEPT_AND_CHILD) {
-          // 本部门及以下数据权限
-          result = filterDeptByDeptIdAndChild(result, userDeptId);
-        } else if (dataScope === DATA_SCOPE_TYPES.CUSTOM) {
-          // 自定义数据权限
-          const deptIds = userInfo.deptIds || [];
-          result = filterDeptByDeptIds(result, deptIds);
-        } else if (dataScope === DATA_SCOPE_TYPES.SELF) {
-          // 仅本人数据权限 - 对于部门管理，通常没有"本人"的概念，这里可以限制为空
-          result = [];
-        }
-        // DATA_SCOPE_TYPES.ALL 不需要过滤
       }
 
       resolve({
@@ -273,16 +250,6 @@ export function deleteDepartment(deptId) {
           user.deptId = 1; // 设置为总公司部门
           user.deptName = "总公司"; // 更新部门名称
           user.deptPath = "0,1"; // 更新部门路径
-
-          // 如果用户有自定义数据权限，也需要更新
-          if (
-            user.dataScope === "2" &&
-            user.deptIds &&
-            user.deptIds.includes(deptId)
-          ) {
-            // 从自定义数据权限中移除被删除的部门
-            user.deptIds = user.deptIds.filter((id) => id !== deptId);
-          }
         });
 
         console.log(

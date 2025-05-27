@@ -63,8 +63,6 @@
               :active-value="'0'"
               :inactive-value="'1'"
               @change="handleStatusChange(scope.row)"
-              v-data-perm="{ resource: scope.row, action: 'edit' }"
-              :disabled="!hasEditPermission(scope.row)"
             />
           </template>
         </el-table-column>
@@ -76,20 +74,10 @@
         />
         <el-table-column label="操作" align="center" width="280">
           <template #default="scope">
-            <el-button
-              type="primary"
-              link
-              @click="handleAdd(scope.row)"
-              v-data-perm="{ resource: scope.row, action: 'add' }"
-            >
+            <el-button type="primary" link @click="handleAdd(scope.row)">
               <el-icon><Plus /></el-icon> 新增
             </el-button>
-            <el-button
-              type="primary"
-              link
-              @click="handleEdit(scope.row)"
-              v-data-perm="{ resource: scope.row, action: 'edit' }"
-            >
+            <el-button type="primary" link @click="handleEdit(scope.row)">
               <el-icon><Edit /></el-icon> 修改
             </el-button>
             <el-button type="success" link @click="handleViewUsers(scope.row)">
@@ -100,7 +88,6 @@
               link
               @click="handleDelete(scope.row)"
               :disabled="hasChildren(scope.row)"
-              v-data-perm="{ resource: scope.row, action: 'delete' }"
             >
               <el-icon><Delete /></el-icon> 删除
             </el-button>
@@ -267,7 +254,6 @@ import {
   listDepartmentUsers,
 } from "@/api/department";
 import { useUserStore } from "@/store";
-import { checkDataPermission } from "@/utils/permission";
 
 // 加载状态
 const loading = ref(false);
@@ -343,15 +329,7 @@ const deptRules = {
 const getDeptList = async () => {
   loading.value = true;
   try {
-    // 获取当前用户权限信息
-    const userPermissions = {
-      roles: userStore.roles || [],
-      dataScope: userStore.permissions?.dataScope,
-      deptId: userStore.userInfo?.deptId,
-      deptIds: userStore.userInfo?.deptIds || [],
-    };
-
-    const res = await listDepartment(queryParams, userPermissions);
+    const res = await listDepartment(queryParams);
     deptList.value = res.data;
   } catch (error) {
     console.error("获取部门列表失败:", error);
@@ -525,18 +503,6 @@ const submitForm = () => {
       }
     }
   });
-};
-
-const userStore = useUserStore();
-
-// 检查是否有编辑权限
-const hasEditPermission = (row) => {
-  return checkDataPermission(row, "edit");
-};
-
-// 检查是否有删除权限
-const hasDeletePermission = (row) => {
-  return checkDataPermission(row, "delete") && !hasChildren(row);
 };
 
 onMounted(() => {

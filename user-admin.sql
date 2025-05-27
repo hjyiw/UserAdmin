@@ -103,13 +103,6 @@ CREATE TABLE sys_role_menu (
     KEY idx_menu_id (menu_id)
 ) ENGINE=InnoDB COMMENT='角色和菜单关联表';
 
--- 用户数据权限表
-CREATE TABLE sys_user_data_scope (
-    user_id         BIGINT      NOT NULL COMMENT '用户ID',
-    dept_id         BIGINT      NOT NULL COMMENT '部门ID',
-    PRIMARY KEY (user_id, dept_id)
-) ENGINE=InnoDB COMMENT='用户数据权限表';
-
 -- 重置密码令牌表
 CREATE TABLE sys_password_reset (
     reset_id        BIGINT      NOT NULL AUTO_INCREMENT COMMENT '重置ID',
@@ -277,23 +270,18 @@ INSERT INTO sys_role_menu (role_id, menu_id) VALUES (3, 200);
 INSERT INTO sys_role_menu (role_id, menu_id) VALUES (3, 201);
 INSERT INTO sys_role_menu (role_id, menu_id) VALUES (3, 202);
 
--- 用户数据权限
--- 管理员可访问所有部门数据
-INSERT INTO sys_user_data_scope (user_id, dept_id) VALUES (1, 1);
-INSERT INTO sys_user_data_scope (user_id, dept_id) VALUES (1, 2);
-INSERT INTO sys_user_data_scope (user_id, dept_id) VALUES (1, 3);
-INSERT INTO sys_user_data_scope (user_id, dept_id) VALUES (1, 4);
-INSERT INTO sys_user_data_scope (user_id, dept_id) VALUES (1, 5);
-INSERT INTO sys_user_data_scope (user_id, dept_id) VALUES (1, 6);
-INSERT INTO sys_user_data_scope (user_id, dept_id) VALUES (1, 7);
-INSERT INTO sys_user_data_scope (user_id, dept_id) VALUES (1, 8);
+-- 重置密码令牌
+INSERT INTO sys_password_reset (reset_id, user_id, token, expire_time, create_time)
+VALUES (1, 1, 'token123', '2024-07-01 12:00:00', '2023-07-01 12:00:00');
 
--- 测试人员可访问研发部门数据
-INSERT INTO sys_user_data_scope (user_id, dept_id) VALUES (2, 2);
+INSERT INTO sys_password_reset (reset_id, user_id, token, expire_time, create_time)
+VALUES (2, 2, 'token456', '2024-07-02 12:00:00', '2023-07-02 12:00:00');
 
--- 开发人员可访问前端组数据
-INSERT INTO sys_user_data_scope (user_id, dept_id) VALUES (3, 5);
+INSERT INTO sys_password_reset (reset_id, user_id, token, expire_time, create_time)
+VALUES (3, 3, 'token789', '2024-07-03 12:00:00', '2023-07-03 12:00:00');
 
--- 项目经理可访问后端组和前端组数据
-INSERT INTO sys_user_data_scope (user_id, dept_id) VALUES (4, 5);
-INSERT INTO sys_user_data_scope (user_id, dept_id) VALUES (4, 6); 
+INSERT INTO sys_password_reset (reset_id, user_id, token, expire_time, create_time)
+VALUES (4, 4, 'token101', '2024-07-04 12:00:00', '2023-07-04 12:00:00');
+
+INSERT INTO sys_password_reset (reset_id, user_id, token, expire_time, create_time)
+VALUES (5, 5, 'token111', '2024-07-05 12:00:00', '2023-07-05 12:00:00'); 

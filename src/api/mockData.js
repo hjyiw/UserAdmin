@@ -1,5 +1,4 @@
 // 模拟数据文件 - 存储部门和用户的初始数据
-import { DATA_SCOPE_TYPES } from "@/utils/permission";
 // 模拟部门数据
 export const mockDeptData = [
   {
@@ -142,8 +141,6 @@ export const mockUserData = [
     createBy: 1,
     roleIds: [1], // 管理员角色
     roles: ["管理员"],
-    dataScope: DATA_SCOPE_TYPES.ALL, // 全部数据权限
-    deptIds: validDeptIds, // 自定义权限部门列表
   },
   {
     userId: 2,
@@ -159,8 +156,6 @@ export const mockUserData = [
     createBy: 1,
     roleIds: [2],
     roles: ["测试人员"],
-    dataScope: DATA_SCOPE_TYPES.DEPT, // 本部门数据权限
-    deptIds: [2],
   },
   {
     userId: 3,
@@ -176,126 +171,5 @@ export const mockUserData = [
     createBy: 1,
     roleIds: [3],
     roles: ["开发人员"],
-    dataScope: DATA_SCOPE_TYPES.DEPT_AND_CHILD, // 本部门及以下数据权限
-    deptIds: [5],
-  },
-  {
-    userId: 4,
-    username: "pm",
-    nickname: "项目经理",
-    deptId: 6,
-    deptName: "后端组",
-    deptPath: "0,1,2,6",
-    phone: "13800138003",
-    email: "pm@example.com",
-    status: "0",
-    createTime: "2023-01-04 12:00:00",
-    createBy: 1,
-    roleIds: [4],
-    roles: ["项目经理"],
-    dataScope: DATA_SCOPE_TYPES.CUSTOM, // 自定义数据权限
-    deptIds: [6, 5],
-  },
-  {
-    userId: 5,
-    username: "marketing",
-    nickname: "市场专员",
-    deptId: 7,
-    deptName: "市场部门",
-    deptPath: "0,7",
-    phone: "13800138004",
-    email: "marketing@example.com",
-    status: "0",
-    createTime: "2023-01-05 12:00:00",
-    createBy: 1,
-    roleIds: [5],
-    roles: ["市场人员"],
-    dataScope: DATA_SCOPE_TYPES.SELF, // 仅本人数据权限
-    deptIds: [],
-  },
-  {
-    userId: 6,
-    username: "finance",
-    nickname: "财务人员",
-    deptId: 8,
-    deptName: "财务部门",
-    deptPath: "0,8",
-    phone: "13800138005",
-    email: "finance@example.com",
-    status: "0",
-    createTime: "2023-01-06 12:00:00",
-    createBy: 1,
-    roleIds: [6],
-    roles: ["财务人员"],
-    dataScope: DATA_SCOPE_TYPES.SELF, // 仅本人数据权限
-    deptIds: [],
-  },
-  {
-    userId: 7,
-    username: "hr",
-    nickname: "人事专员",
-    deptId: 3,
-    deptName: "测试部门",
-    deptPath: "0,1,3",
-    phone: "13800138006",
-    email: "hr@example.com",
-    status: "0",
-    createTime: "2023-01-07 12:00:00",
-    createBy: 1,
-    roleIds: [7],
-    roles: ["人事专员"],
-    dataScope: DATA_SCOPE_TYPES.DEPT, // 本部门数据权限
-    deptIds: [3],
-  },
-  {
-    userId: 8,
-    username: "ops",
-    nickname: "运维工程师",
-    deptId: 4,
-    deptName: "运维部门",
-    deptPath: "0,1,4",
-    phone: "13800138007",
-    email: "ops@example.com",
-    status: "1",
-    createTime: "2023-01-08 12:00:00",
-    createBy: 1,
-    roleIds: [8],
-    roles: ["运维人员"],
-    dataScope: DATA_SCOPE_TYPES.DEPT, // 本部门数据权限
-    deptIds: [4],
-  },
-  {
-    userId: 9,
-    username: "developer",
-    nickname: "后端开发",
-    deptId: 6,
-    deptName: "后端组",
-    deptPath: "0,1,2,6",
-    phone: "13800138009",
-    email: "developer@example.com",
-    status: "0", // 正常状态
-    createTime: "2023-05-15 10:30:00",
-    createBy: 1,
-    roleIds: [3], // 开发人员角色
-    roles: ["开发人员"],
-    dataScope: DATA_SCOPE_TYPES.DEPT, // 本部门数据权限
-    deptIds: [6],
-  },
-  {
-    userId: 10,
-    username: "product",
-    nickname: "产品经理",
-    deptId: 1,
-    deptName: "总公司",
-    deptPath: "0,1",
-    phone: "13800138009",
-    email: "product@example.com",
-    status: "0",
-    createTime: "2023-01-10 12:00:00",
-    createBy: 1,
-    roleIds: [10],
-    roles: ["产品经理"],
-    dataScope: DATA_SCOPE_TYPES.DEPT, // 本部门数据权限
-    deptIds: [1],
   },
 ];
