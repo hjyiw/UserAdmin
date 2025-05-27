@@ -45,22 +45,6 @@
             <el-option label="停用" value="1" />
           </el-select>
         </el-form-item>
-        <el-form-item label="部门" prop="deptId">
-          <el-tree-select
-            v-model="queryParams.deptId"
-            :data="deptTreeOptions"
-            :props="{
-              label: 'label',
-              value: 'value',
-              children: 'children',
-              disabled: 'disabled',
-            }"
-            value-key="value"
-            placeholder="请选择部门"
-            clearable
-            style="width: 180px"
-          />
-        </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleQuery">
             <el-icon><Search /></el-icon> 搜索
@@ -96,12 +80,6 @@
         <el-table-column
           label="用户昵称"
           prop="nickname"
-          :show-overflow-tooltip="true"
-          width="120"
-        />
-        <el-table-column
-          label="部门"
-          prop="deptName"
           :show-overflow-tooltip="true"
           width="120"
         />
@@ -239,36 +217,17 @@
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="部门" prop="deptId">
-              <el-tree-select
-                v-model="userForm.deptId"
-                :data="deptTreeOptions"
-                :props="{
-                  label: 'label',
-                  value: 'value',
-                  children: 'children',
-                  disabled: 'disabled',
-                }"
-                value-key="value"
-                placeholder="请选择部门"
-                check-strictly
-                :render-after-expand="false"
-                style="width: 100%"
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
             <el-form-item label="手机号码" prop="phone">
               <el-input v-model="userForm.phone" placeholder="请输入手机号码" />
             </el-form-item>
           </el-col>
-        </el-row>
-        <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="邮箱" prop="email">
               <el-input v-model="userForm.email" placeholder="请输入邮箱" />
             </el-form-item>
           </el-col>
+        </el-row>
+        <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="密码" prop="password" v-if="!userForm.userId">
               <el-input
@@ -339,9 +298,6 @@
       >
         <el-form-item label="用户名称">
           <span>{{ roleAssignForm.username }}</span>
-        </el-form-item>
-        <el-form-item label="部门">
-          <span>{{ roleAssignForm.deptName }}</span>
         </el-form-item>
         <el-form-item label="已分配角色" prop="roleIds">
           <el-select
@@ -416,7 +372,6 @@ import {
 import {
   listUsers,
   changeUserStatus,
-  listDepartments,
   listRoles,
   createUser,
   updateUser,
@@ -424,7 +379,6 @@ import {
   uploadAvatar,
   assignUserRoles,
 } from "@/api/user";
-import { listDepartmentSelector } from "@/api/department";
 import { formRules } from "@/utils/validate";
 import { useUserStore } from "@/store";
 
@@ -436,10 +390,6 @@ const submitLoading = ref(false);
 const userList = ref([]);
 // 总条数
 const total = ref(0);
-// 部门选项
-const deptOptions = ref([]);
-// 部门树形选项（用于下拉选择）
-const deptTreeOptions = ref([]);
 // 角色选项
 const roleOptions = ref([]);
 // 查询表单引用
@@ -461,7 +411,6 @@ const queryParams = reactive({
   phone: "",
   email: "",
   status: "",
-  deptId: undefined,
 });
 
 // 用户表单数据
@@ -470,7 +419,6 @@ const userForm = reactive({
   username: "",
   nickname: "",
   password: "",
-  deptId: undefined,
   phone: "",
   email: "",
   status: "0",
@@ -485,7 +433,6 @@ const userRules = reactive({
   phone: formRules.phone,
   email: formRules.email,
   nickname: [{ required: true, message: "请输入用户昵称", trigger: "blur" }],
-  deptId: [{ required: true, message: "请选择部门", trigger: "change" }],
   roleIds: [{ required: true, message: "请选择角色", trigger: "change" }],
 });
 
@@ -503,22 +450,6 @@ const getUserList = async () => {
     console.error("获取用户列表失败:", error);
   } finally {
     loading.value = false;
-  }
-};
-
-// 获取部门选项
-const getDeptOptions = async () => {
-  try {
-    // 获取部门选择器数据（树形结构）
-    const res = await listDepartmentSelector();
-    deptTreeOptions.value = res.data;
-
-    // 获取部门列表（扁平结构，用于数据权限设置）
-    const deptRes = await listDepartments();
-    deptOptions.value = deptRes.data;
-  } catch (error) {
-    console.error("获取部门选项失败:", error);
-    ElMessage.error("获取部门数据失败");
   }
 };
 
@@ -576,7 +507,6 @@ const resetForm = () => {
     username: "",
     nickname: "",
     password: "",
-    deptId: undefined,
     phone: "",
     email: "",
     status: "0",
@@ -590,11 +520,6 @@ const handleAdd = () => {
   resetForm();
   dialogTitle.value = "添加用户";
 
-  // 确保获取部门数据
-  if (deptTreeOptions.value.length === 0) {
-    getDeptOptions();
-  }
-
   dialogVisible.value = true;
   getRoleOptions(); // 获取角色列表
 };
@@ -604,11 +529,6 @@ const handleEdit = (row) => {
   resetForm();
   dialogTitle.value = "修改用户";
 
-  // 确保获取部门数据
-  if (deptTreeOptions.value.length === 0) {
-    getDeptOptions();
-  }
-
   dialogVisible.value = true;
   getRoleOptions(); // 获取角色列表
 
@@ -617,7 +537,6 @@ const handleEdit = (row) => {
     userId: row.userId,
     username: row.username,
     nickname: row.nickname,
-    deptId: row.deptId,
     phone: row.phone,
     email: row.email,
     status: row.status,
@@ -634,7 +553,6 @@ const roleAssignFormRef = ref(null);
 const roleAssignForm = reactive({
   userId: undefined,
   username: "",
-  deptName: "",
   roleIds: [],
 });
 
@@ -649,7 +567,6 @@ const selectedRoles = computed(() => {
 const handleRoleAssign = (row) => {
   roleAssignForm.userId = row.userId;
   roleAssignForm.username = row.username;
-  roleAssignForm.deptName = row.deptName;
   roleAssignForm.roleIds = row.roleIds || [];
 
   // 确保获取角色数据
@@ -735,56 +652,9 @@ const submitForm = () => {
     if (valid) {
       submitLoading.value = true;
       try {
-        // 确保deptId是数字类型
-        let deptId = userForm.deptId;
-        if (typeof deptId !== "number") {
-          const numId = Number(deptId);
-          if (!isNaN(numId)) {
-            deptId = numId;
-          }
-        }
-
-        // 获取部门名称
-        let deptName = "未分配";
-
-        // 从树形结构中查找部门名称
-        const findDeptNameInTree = (tree, deptId) => {
-          for (const node of tree) {
-            if (node.value === deptId) {
-              return node.label.replace(/^[│└─\s]+/, ""); // 移除前缀符号
-            }
-            if (node.children && node.children.length) {
-              const found = findDeptNameInTree(node.children, deptId);
-              if (found) return found;
-            }
-          }
-          return null;
-        };
-
-        const deptNameFromTree = findDeptNameInTree(
-          deptTreeOptions.value,
-          deptId
-        );
-        if (deptNameFromTree) {
-          deptName = deptNameFromTree;
-        }
-
-        // 获取角色名称列表
-        const roles = userForm.roleIds
-          .map((roleId) => {
-            const role = roleOptions.value.find(
-              (item) => item.roleId === roleId
-            );
-            return role ? role.roleName : "";
-          })
-          .filter(Boolean);
-
         // 构建提交数据
         const submitData = {
           ...userForm,
-          deptId,
-          deptName,
-          roles,
         };
 
         if (userForm.userId) {
@@ -810,7 +680,6 @@ const submitForm = () => {
 
 onMounted(() => {
   getUserList();
-  getDeptOptions();
   getRoleOptions();
 });
 </script>

@@ -97,17 +97,6 @@ const permissionRoutes = [
           roles: ["管理员", "开发人员"], // 允许访问的角色
         },
       },
-      // 部门管理
-      {
-        path: "dept",
-        name: "Dept",
-        component: () => import("@/views/system/dept/index.vue"),
-        meta: {
-          title: "部门管理",
-          icon: "OfficeBuilding",
-          roles: ["管理员"], // 只允许管理员访问
-        },
-      },
     ],
   },
 ];

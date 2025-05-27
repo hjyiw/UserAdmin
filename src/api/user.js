@@ -1,28 +1,7 @@
 // 用户管理相关API
-import {
-  mockUserData,
-  flatDeptData,
-  deptNameMap,
-  validDeptIds,
-} from "@/api/mockData";
-
-// 修复用户数据中的部门信息
-const fixUserDeptData = (user) => {
-  // 确保部门ID存在于有效部门中
-  if (!validDeptIds.includes(user.deptId)) {
-    // 如果部门ID无效，设置为总公司部门
-    user.deptId = 1;
-    user.deptPath = "0,1";
-  }
-
-  // 更新部门名称
-  user.deptName = deptNameMap[user.deptId] || "未分配";
-
-  return user;
-};
 
 // 导出用户数据，供其他模块使用
-export { mockUserData };
+import { mockUserData } from "./mockData";
 
 /**
  * 获取用户列表
@@ -129,31 +108,6 @@ export function changeUserStatus(userId, status) {
         code: 200,
         data: null,
         msg: "状态修改成功",
-      });
-    }, 300);
-  });
-}
-
-/**
- * 获取部门列表
- * @returns {Promise} - 返回部门列表
- */
-export function listDepartments() {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // 使用部门API中的数据
-      const depts = flatDeptData.map((dept) => ({
-        deptId: dept.deptId,
-        deptName: dept.deptName,
-        parentId: dept.parentId,
-        leader: dept.leader,
-        status: dept.status,
-      }));
-
-      resolve({
-        code: 200,
-        data: depts,
-        msg: "获取成功",
       });
     }, 300);
   });
