@@ -2,71 +2,92 @@
 
 // 导出用户数据，供其他模块使用
 import { mockUserData } from "./mockData";
-
+import request from "@/utils/request";
 /**
  * 获取用户列表
- * @param {Object} params - 查询参数
+ * @param {Object} params - 查询参数，包括pageNum、pageSize、username、phone、email、status
  * @returns {Promise} - 返回用户列表数据
  */
 export function listUsers(params) {
   return new Promise((resolve) => {
-    setTimeout(() => {
-      const { pageNum, pageSize, username, phone, status, deptId, email } =
-        params;
-
-      // 过滤数据
-      let filteredData = [...mockUserData];
-
-      // 按用户名筛选
-      if (username) {
-        filteredData = filteredData.filter(
-          (item) =>
-            item.username.toLowerCase().includes(username.toLowerCase()) ||
-            item.nickname.toLowerCase().includes(username.toLowerCase())
-        );
-      }
-
-      // 按手机号筛选
-      if (phone) {
-        filteredData = filteredData.filter((item) =>
-          item.phone.includes(phone)
-        );
-      }
-
-      // 按状态筛选
-      if (status !== "" && status !== undefined) {
-        filteredData = filteredData.filter((item) => item.status === status);
-      }
-
-      // 按部门筛选
-      if (deptId) {
-        filteredData = filteredData.filter((item) => item.deptId === deptId);
-      }
-
-      // 按邮箱筛选
-      if (email) {
-        filteredData = filteredData.filter((item) =>
-          item.email.toLowerCase().includes(email.toLowerCase())
-        );
-      }
-
-      // 计算总数
-      const total = filteredData.length;
-
-      // 分页
-      const startIndex = (pageNum - 1) * pageSize;
-      const endIndex = Math.min(startIndex + pageSize, total);
-      const pagedData = filteredData.slice(startIndex, endIndex);
-
-      resolve({
-        code: 200,
-        data: {
-          total,
-          list: pagedData,
-        },
-        msg: "查询成功",
+    request
+      .get("/user/list", {
+        params,
+      })
+      .then((res) => {
+        resolve(res);
       });
-    }, 300); // 模拟网络延迟
+    // setTimeout(() => {
+    //   const {
+    //     pageNum = 1,
+    //     pageSize = 10,
+    //     username,
+    //     phone,
+    //     email,
+    //     status,
+    //   } = params || {};
+
+    // // 过滤数据
+    // let filteredData = [...mockUserData];
+
+    // // 按用户名筛选
+    // if (username) {
+    //   filteredData = filteredData.filter(
+    //     (item) =>
+    //       item.username.toLowerCase().includes(username.toLowerCase()) ||
+    //       item.nickname.toLowerCase().includes(username.toLowerCase())
+    //   );
+    // }
+
+    // // 按手机号筛选
+    // if (phone) {
+    //   filteredData = filteredData.filter((item) =>
+    //     item.phone.includes(phone)
+    //   );
+    // }
+
+    // // 按状态筛选
+    // if (status !== "" && status !== undefined) {
+    //   filteredData = filteredData.filter((item) => item.status === status);
+    // }
+
+    // // 按邮箱筛选
+    // if (email) {
+    //   filteredData = filteredData.filter((item) =>
+    //     item.email.toLowerCase().includes(email.toLowerCase())
+    //   );
+    // }
+
+    // // 计算总数
+    // const total = filteredData.length;
+
+    // // 分页
+    // const startIndex = (pageNum - 1) * pageSize;
+    // const endIndex = Math.min(startIndex + pageSize, total);
+    // const pagedData = filteredData.slice(startIndex, endIndex);
+
+    // // 格式化数据以匹配API返回格式
+    // const formattedData = pagedData.map((user) => ({
+    //   userId: user.userId,
+    //   username: user.username,
+    //   nickname: user.nickname,
+    //   phone: user.phone,
+    //   email: user.email,
+    //   status: user.status,
+    //   createTime: user.createTime,
+    //   roleIds: user.roleIds || [],
+    //   roles: user.roles || [],
+    // }));
+
+    // resolve({
+    //   code: 200,
+    //   msg: "查询成功",
+    //     data: {
+    //       total,
+    //       list: formattedData,
+    //     },
+    //   });
+    // }, 300); // 模拟网络延迟
   });
 }
 

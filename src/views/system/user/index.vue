@@ -457,8 +457,19 @@ const getUserList = async () => {
 const getRoleOptions = async () => {
   try {
     const res = await listRoles();
-    roleOptions.value = res.data;
+    if (res.data && res.data.list) {
+      // 如果返回的是分页格式，取出list
+      roleOptions.value = res.data.list;
+    } else if (Array.isArray(res.data)) {
+      // 如果直接返回的是数组
+      roleOptions.value = res.data;
+    } else {
+      // 其他情况设为空数组
+      roleOptions.value = [];
+      console.error("获取角色列表格式不正确:", res);
+    }
   } catch (error) {
+    roleOptions.value = [];
     console.error("获取角色列表失败:", error);
   }
 };
@@ -558,6 +569,9 @@ const roleAssignForm = reactive({
 
 // 计算已选择的角色详细信息
 const selectedRoles = computed(() => {
+  if (!roleOptions.value || !Array.isArray(roleOptions.value)) {
+    return [];
+  }
   return roleOptions.value.filter((role) =>
     roleAssignForm.roleIds.includes(role.roleId)
   );

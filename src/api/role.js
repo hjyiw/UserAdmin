@@ -1,5 +1,5 @@
 // 角色管理相关API
-
+import request from "@/utils/request";
 // 模拟角色列表数据
 const mockRoleData = [
   {
@@ -77,54 +77,26 @@ const mockRoleData = [
  */
 export function listRoles(params) {
   return new Promise((resolve) => {
-    setTimeout(() => {
-      const { pageNum, pageSize, roleName, roleKey, status } = params || {};
-
-      // 过滤数据
-      let filteredData = [...mockRoleData];
-
-      // 按角色名称筛选
-      if (roleName) {
-        filteredData = filteredData.filter((item) =>
-          item.roleName.toLowerCase().includes(roleName.toLowerCase())
-        );
-      }
-
-      // 按角色标识筛选
-      if (roleKey) {
-        filteredData = filteredData.filter((item) =>
-          item.roleKey.toLowerCase().includes(roleKey.toLowerCase())
-        );
-      }
-
-      // 按状态筛选
-      if (status !== undefined && status !== "") {
-        filteredData = filteredData.filter((item) => item.status === status);
-      }
-
-      // 计算总数
-      const total = filteredData.length;
-
-      // 如果有分页参数，则进行分页
-      if (pageNum !== undefined && pageSize !== undefined) {
-        // 分页
-        const startIndex = (pageNum - 1) * pageSize;
-        const endIndex = Math.min(startIndex + pageSize, total);
-        filteredData = filteredData.slice(startIndex, endIndex);
-      }
-
-      resolve({
-        code: 200,
-        data:
-          params && params.pageNum
-            ? {
-                total,
-                list: filteredData,
-              }
-            : filteredData,
-        msg: "查询成功",
+    request
+      .get("/role/list", {
+        params,
+      })
+      .then((res) => {
+        // 确保返回的是数组格式的角色列表
+        if (res.data && res.data.list) {
+          // 如果返回的是分页格式，取出list
+          resolve(res);
+        } else if (Array.isArray(res.data)) {
+          // 如果直接返回的是数组，保持不变
+          resolve(res);
+        } else {
+          // 如果是其他格式，转换为数组格式
+          resolve({
+            ...res,
+            data: Array.isArray(res.data) ? res.data : [],
+          });
+        }
       });
-    }, 300); // 模拟网络延迟
   });
 }
 
