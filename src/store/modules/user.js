@@ -132,6 +132,59 @@ const mockGetUserInfo = () => {
   });
 };
 
+// 获取用户信息
+// 方式：get
+// 地址：/user/info
+// 请求参数：query: username
+// 返回参数：
+// {
+//     "code": 200,
+//     "msg": "获取成功",
+//     "data": {
+//         "user": {
+//             "userId": 1,
+//             "username": "admin",
+//             "nickname": "管理员",
+//             "avatar": "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif",
+//             "email": "admin@example.com",
+//             "roles": [
+//                 "管理员"
+//             ],
+//             "permissions": [
+//                 "system:user:list",
+//                 "system:role:list",
+//                 "system:dept:list"
+//             ]
+//         }
+//     }
+// }
+// 改成异步处理
+const getUserInfo = () => {
+  return new Promise((resolve, reject) => {
+    // 从token中获取用户名
+    const token = getToken();
+    if (!token) {
+      reject({ code: 401, message: "未登录或登录已过期" });
+      return;
+    }
+
+    // 解析token中的用户名
+    const username = token.split("-")[0];
+    console.log("username: ", username);
+    request
+      .get("/user/info", {
+        params: {
+          username: username,
+        },
+      })
+      .then((res) => {
+        resolve(res);
+      })
+      .catch((err) => {
+        reject(err);
+      });
+  });
+};
 // 模拟退出登录API调用
 const mockLogout = () => {
   return new Promise((resolve) => {
@@ -145,6 +198,32 @@ const mockLogout = () => {
   });
 };
 
+// 退出登录
+// 方式：post
+// 地址：/auth/logout
+// 请求参数：header：Authorization
+// 返回参数：
+//{
+// "code": 200,
+// "msg": "退出成功",
+// "data": null
+// }
+const logout = () => {
+  return new Promise((resolve, reject) => {
+    request
+      .post("/auth/logout", {
+        headers: {
+          Authorization: getToken(),
+        },
+      })
+      .then((res) => {
+        resolve(res);
+      })
+      .catch((err) => {
+        reject(err);
+      });
+  });
+};
 // 模拟修改密码API调用
 const mockUpdatePassword = (oldPassword, newPassword) => {
   return new Promise((resolve, reject) => {
@@ -235,6 +314,7 @@ export const useUserStore = defineStore("user", {
     token: getToken(), // 获取token
     userInfo: {}, // 用户信息
     roles: [], // 用户角色
+    roleIds: [], // 用户角色ID
     permissions: [], // 用户权限
     rememberMe: getRememberMe() || false, // 记住我状态
   }),
@@ -287,7 +367,7 @@ export const useUserStore = defineStore("user", {
     // 获取用户信息
     getUserInfo() {
       return new Promise((resolve, reject) => {
-        mockGetUserInfo()
+        getUserInfo()
           .then((response) => {
             const { data } = response;
             const { user } = data; // 用户对象
@@ -301,6 +381,8 @@ export const useUserStore = defineStore("user", {
             this.userInfo = user;
             // 设置角色
             this.roles = user.roles || [];
+            // 设置角色ID
+            this.roleIds = user.roleIds || [];
             // 设置权限
             this.permissions = user.permissions || [];
 
@@ -360,7 +442,7 @@ export const useUserStore = defineStore("user", {
     // 退出登录
     logout() {
       return new Promise((resolve, reject) => {
-        mockLogout()
+        logout()
           .then(() => {
             this.clearUserState();
             resolve();

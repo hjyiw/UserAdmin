@@ -72,7 +72,7 @@ const permissionRoutes = [
     meta: {
       title: "系统管理",
       icon: "Setting",
-      roles: ["管理员", "开发人员", "测试人员"], // 允许访问的角色
+      roles: ["超级管理员"], // 允许访问的角色
     },
     children: [
       // 用户管理
@@ -83,7 +83,7 @@ const permissionRoutes = [
         meta: {
           title: "用户管理",
           icon: "User",
-          roles: ["管理员", "开发人员", "测试人员"], // 允许访问的角色
+          roles: ["超级管理员", "用户管理员"], // 允许访问的角色
         },
       },
       // 角色管理
@@ -94,7 +94,7 @@ const permissionRoutes = [
         meta: {
           title: "角色管理",
           icon: "UserFilled",
-          roles: ["管理员", "开发人员"], // 允许访问的角色
+          roles: ["超级管理员", "高级管理员"], // 允许访问的角色
         },
       },
     ],
