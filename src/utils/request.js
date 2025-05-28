@@ -4,8 +4,10 @@ import { getToken } from "@/utils/auth";
 import { useUserStore } from "@/store";
 
 // 创建axios实例
+const baseURL = "https://m1.apifoxmock.com/m1/6409600-6106818-default";
+
 const service = axios.create({
-  baseURL: process.env.VUE_APP_API_URL || "",
+  baseURL: baseURL,
   timeout: 10000,
 });
 
@@ -73,10 +75,12 @@ service.interceptors.response.use(
         case 401:
           message = "未授权，请登录";
           // 处理未授权情况，清除token并跳转到登录页
-          const userStore = useUserStore();
-          userStore.resetToken().then(() => {
-            location.href = "/login";
-          });
+          {
+            const userStore = useUserStore();
+            userStore.resetToken().then(() => {
+              location.href = "/login";
+            });
+          }
           break;
         case 403:
           message = "拒绝访问";

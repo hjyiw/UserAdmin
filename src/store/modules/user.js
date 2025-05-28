@@ -13,7 +13,7 @@ import {
   clearLoginInfo,
 } from "@/utils/auth";
 import { usePermissionStore } from "./permission";
-import router from "@/router";
+import request from "@/utils/request";
 
 // 模拟API调用
 const mockLogin = (username, password) => {
@@ -49,6 +49,35 @@ const mockLogin = (username, password) => {
         });
       });
     }, 500);
+  });
+};
+// 登录请求
+// body请求参数 ： password,username
+// 方式：post
+// 地址：/auth/login
+// 返回参数：
+// {
+//     "code": 200,
+//     "msg": "登录成功",
+//     "data": {
+//         "token": "admin-token-1234567890",
+//         "userId": 1
+//     }
+// }
+
+const login = (username, password) => {
+  return new Promise((resolve, reject) => {
+    request
+      .post("/auth/login", {
+        username,
+        password,
+      })
+      .then((res) => {
+        resolve(res);
+      })
+      .catch((err) => {
+        reject(err);
+      });
   });
 };
 
@@ -88,9 +117,6 @@ const mockGetUserInfo = () => {
               avatar:
                 "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif",
               email: user.email,
-              deptId: user.deptId,
-              deptName: user.deptName,
-              deptPath: user.deptPath,
               roles: user.roles, // 用户角色
               permissions: user.roleIds.includes(3)
                 ? ["system:user:list", "system:role:list"] // 开发人员权限
@@ -228,7 +254,7 @@ export const useUserStore = defineStore("user", {
       // 解构用户信息
       const { username, password, rememberMe = false } = userInfo;
       return new Promise((resolve, reject) => {
-        mockLogin(username, password)
+        login(username, password)
           .then((response) => {
             const { data } = response;
             // 设置token
