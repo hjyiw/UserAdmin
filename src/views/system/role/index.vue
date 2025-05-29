@@ -229,6 +229,7 @@ import {
   deleteRole,
   listMenus,
 } from "@/api/role";
+import request from "@/utils/request";
 
 // 加载状态
 const loading = ref(false);
@@ -440,14 +441,18 @@ const submitPermission = async () => {
     const menuIds = menuTreeRef.value.getCheckedKeys();
 
     // 更新角色权限
-    await updateRole({
+    const res = await updateRole({
       roleId: permissionForm.roleId,
       menuIds: menuIds,
     });
 
-    ElMessage.success("权限分配成功");
-    permissionVisible.value = false;
-    getRoleList(); // 刷新列表
+    if (res.code === 200) {
+      ElMessage.success(res.msg || "权限分配成功");
+      permissionVisible.value = false;
+      getRoleList(); // 刷新列表
+    } else {
+      ElMessage.error(res.msg || "权限分配失败");
+    }
   } catch (error) {
     ElMessage.error(error.message || "权限分配失败");
   } finally {
@@ -457,6 +462,12 @@ const submitPermission = async () => {
 
 // 删除角色按钮操作
 const handleDelete = (row) => {
+  // 不允许删除管理员角色
+  if (row.roleKey === "superAdmin" || row.roleKey === "admin") {
+    ElMessage.warning("系统管理员角色不能删除");
+    return;
+  }
+
   ElMessageBox.confirm(`确认删除角色 ${row.roleName} 吗？`, "警告", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
@@ -464,9 +475,13 @@ const handleDelete = (row) => {
   })
     .then(async () => {
       try {
-        await deleteRole(row.roleId);
-        ElMessage.success("删除成功");
-        getRoleList(); // 刷新列表
+        const res = await deleteRole(row.roleId);
+        if (res.code === 200) {
+          ElMessage.success(res.msg || "删除成功");
+          getRoleList(); // 刷新列表
+        } else {
+          ElMessage.error(res.msg || "删除失败");
+        }
       } catch (error) {
         ElMessage.error(error.message || "删除失败");
       }
