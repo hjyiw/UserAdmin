@@ -95,16 +95,6 @@
           :show-overflow-tooltip="true"
           min-width="150"
         />
-        <el-table-column label="状态" align="center" width="100">
-          <template #default="scope">
-            <el-switch
-              v-model="scope.row.status"
-              :active-value="'0'"
-              :inactive-value="'1'"
-              @change="handleStatusChange(scope.row)"
-            />
-          </template>
-        </el-table-column>
         <el-table-column
           label="角色"
           align="center"
@@ -239,35 +229,6 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="用户状态" prop="status">
-              <el-radio-group v-model="userForm.status">
-                <el-radio label="0">正常</el-radio>
-                <el-radio label="1">停用</el-radio>
-              </el-radio-group>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-col :span="24">
-            <el-form-item label="角色" prop="roleIds">
-              <el-select
-                v-model="userForm.roleIds"
-                multiple
-                placeholder="请选择角色"
-                style="width: 100%"
-              >
-                <el-option
-                  v-for="role in roleOptions"
-                  :key="role.roleId"
-                  :label="role.roleName"
-                  :value="role.roleId"
-                />
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
@@ -315,12 +276,6 @@
               :disabled="role.status === '1'"
             >
               <span>{{ role.roleName }}</span>
-              <span
-                v-if="role.status === '1'"
-                style="color: #999; font-size: 12px"
-              >
-                (已停用)</span
-              >
             </el-option>
           </el-select>
           <div class="role-info" v-if="selectedRoles.length > 0">
@@ -371,13 +326,13 @@ import {
 } from "@element-plus/icons-vue";
 import {
   listUsers,
-  changeUserStatus,
   listRoles,
   createUser,
   updateUser,
   deleteUser,
   uploadAvatar,
   assignUserRoles,
+  getUserRoles,
 } from "@/api/user";
 import { formRules } from "@/utils/validate";
 import { useUserStore } from "@/store";
@@ -497,19 +452,6 @@ const handleCurrentChange = (val) => {
   queryParams.pageNum = val;
   getUserList();
 };
-
-// 处理用户状态变更
-const handleStatusChange = async (row) => {
-  try {
-    await changeUserStatus(row.userId, row.status);
-    ElMessage.success(`${row.username} 状态修改成功`);
-  } catch (error) {
-    // 状态改变失败，恢复原状态
-    row.status = row.status === "0" ? "1" : "0";
-    ElMessage.error("状态修改失败");
-  }
-};
-
 // 重置表单
 const resetForm = () => {
   userFormRef.value?.resetFields();
@@ -578,17 +520,38 @@ const selectedRoles = computed(() => {
 });
 
 // 分配角色按钮操作
-const handleRoleAssign = (row) => {
+const handleRoleAssign = async (row) => {
   roleAssignForm.userId = row.userId;
   roleAssignForm.username = row.username;
   roleAssignForm.roleIds = row.roleIds || [];
 
-  // 确保获取角色数据
-  if (roleOptions.value.length === 0) {
-    getRoleOptions();
-  }
+  submitLoading.value = true;
 
-  roleAssignVisible.value = true;
+  try {
+    // 确保获取角色列表数据
+    if (!roleOptions.value || roleOptions.value.length === 0) {
+      await getRoleOptions();
+    }
+
+    // 获取用户的角色信息
+    if (!row.roleIds || row.roleIds.length === 0) {
+      try {
+        const res = await getUserRoles(row.userId);
+        if (res.data && res.data.user && res.data.user.roleIds) {
+          roleAssignForm.roleIds = res.data.user.roleIds;
+        }
+      } catch (error) {
+        console.error("获取用户角色信息失败:", error);
+      }
+    }
+
+    roleAssignVisible.value = true;
+  } catch (error) {
+    ElMessage.error("获取角色列表失败");
+    console.error(error);
+  } finally {
+    submitLoading.value = false;
+  }
 };
 
 // 提交角色分配
@@ -602,12 +565,12 @@ const submitRoleAssign = async () => {
     };
 
     // 更新用户角色
-    await assignUserRoles(submitData);
+    const res = await assignUserRoles(submitData);
 
     // 刷新用户列表
     getUserList();
 
-    ElMessage.success("角色分配成功");
+    ElMessage.success(res.msg || "角色分配成功");
     roleAssignVisible.value = false;
   } catch (error) {
     ElMessage.error(error.message || "角色分配失败");
@@ -618,6 +581,12 @@ const submitRoleAssign = async () => {
 
 // 删除用户按钮操作
 const handleDelete = (row) => {
+  // 不允许删除管理员账号
+  if (row.username === "admin") {
+    ElMessage.warning("系统管理员账号不能删除");
+    return;
+  }
+
   ElMessageBox.confirm(`确认删除用户 ${row.username} 吗？`, "警告", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
@@ -625,11 +594,15 @@ const handleDelete = (row) => {
   })
     .then(async () => {
       try {
-        await deleteUser(row.userId);
-        getUserList();
-        ElMessage.success("删除成功");
+        const res = await deleteUser(row.userId);
+        if (res.code === 200) {
+          getUserList();
+          ElMessage.success(res.msg || "删除成功");
+        } else {
+          ElMessage.error(res.msg || "删除失败");
+        }
       } catch (error) {
-        ElMessage.error("删除失败");
+        ElMessage.error(error.message || "删除失败");
       }
     })
     .catch(() => {});

@@ -231,42 +231,14 @@ export function updateUser(userData) {
  */
 export function assignUserRoles(data) {
   return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const { userId, roleIds } = data;
-
-      const index = mockUserData.findIndex((item) => item.userId === userId);
-
-      if (index !== -1) {
-        // 更新用户角色信息
-        mockUserData[index].roleIds = roleIds;
-
-        // 更新角色名称列表
-        import("@/api/role").then(({ listRoles }) => {
-          listRoles().then((res) => {
-            const allRoles = res.data || [];
-            const roles = roleIds
-              .map((roleId) => {
-                const role = allRoles.find((r) => r.roleId === roleId);
-                return role ? role.roleName : "";
-              })
-              .filter(Boolean);
-
-            mockUserData[index].roles = roles;
-
-            resolve({
-              code: 200,
-              data: mockUserData[index],
-              msg: "角色分配成功",
-            });
-          });
-        });
-      } else {
-        reject({
-          code: 404,
-          message: "用户不存在",
-        });
-      }
-    }, 500);
+    request
+      .post("/user/assignRoles", data)
+      .then((res) => {
+        resolve(res);
+      })
+      .catch((err) => {
+        reject(err);
+      });
   });
 }
 
@@ -276,20 +248,15 @@ export function assignUserRoles(data) {
  * @returns {Promise} - 返回删除结果
  */
 export function deleteUser(userId) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const index = mockUserData.findIndex((item) => item.userId === userId);
-
-      if (index !== -1) {
-        mockUserData.splice(index, 1);
-      }
-
-      resolve({
-        code: 200,
-        data: null,
-        msg: "删除成功",
+  return new Promise((resolve, reject) => {
+    request
+      .delete(`/user/${userId}`)
+      .then((res) => {
+        resolve(res);
+      })
+      .catch((err) => {
+        reject(err);
       });
-    }, 500);
   });
 }
 
@@ -375,5 +342,27 @@ export function updateProfile(profileData) {
         }
       });
     }, 500);
+  });
+}
+
+/**
+ * 获取用户角色信息
+ * @param {number} userId - 用户ID
+ * @returns {Promise} - 返回用户角色信息
+ */
+export function getUserRoles(userId) {
+  return new Promise((resolve, reject) => {
+    request
+      .get(`/user/info`, {
+        params: {
+          userId,
+        },
+      })
+      .then((res) => {
+        resolve(res);
+      })
+      .catch((err) => {
+        reject(err);
+      });
   });
 }

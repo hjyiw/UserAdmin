@@ -26,17 +26,6 @@
             @keyup.enter="handleQuery"
           />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-select
-            v-model="queryParams.status"
-            placeholder="角色状态"
-            clearable
-            style="width: 120px"
-          >
-            <el-option label="正常" value="0" />
-            <el-option label="停用" value="1" />
-          </el-select>
-        </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="loading" @click="handleQuery">
             <el-icon><Search /></el-icon> 搜索
@@ -81,16 +70,7 @@
           width="80"
           align="center"
         />
-        <el-table-column label="状态" align="center" width="100">
-          <template #default="scope">
-            <el-switch
-              v-model="scope.row.status"
-              :active-value="'0'"
-              :inactive-value="'1'"
-              @change="handleStatusChange(scope.row)"
-            />
-          </template>
-        </el-table-column>
+
         <el-table-column
           label="创建时间"
           align="center"
@@ -167,12 +147,7 @@
         <el-form-item label="角色排序" prop="roleSort">
           <el-input-number v-model="roleForm.roleSort" :min="1" :max="999" />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="roleForm.status">
-            <el-radio label="0">正常</el-radio>
-            <el-radio label="1">停用</el-radio>
-          </el-radio-group>
-        </el-form-item>
+
         <el-form-item label="备注" prop="remark">
           <el-input
             v-model="roleForm.remark"
@@ -404,18 +379,6 @@ const handleCurrentChange = (val) => {
   getRoleList();
 };
 
-// 处理角色状态变更
-const handleStatusChange = async (row) => {
-  try {
-    await changeRoleStatus(row.roleId, row.status);
-    ElMessage.success(`${row.roleName} 状态修改成功`);
-  } catch (error) {
-    // 状态改变失败，恢复原状态
-    row.status = row.status === "0" ? "1" : "0";
-    ElMessage.error(error.message || "状态修改失败");
-  }
-};
-
 // 重置表单
 const resetForm = () => {
   roleFormRef.value?.resetFields();
@@ -424,7 +387,6 @@ const resetForm = () => {
     roleName: "",
     roleKey: "",
     roleSort: 1,
-    status: "0",
     remark: "",
     menuIds: [],
   });
