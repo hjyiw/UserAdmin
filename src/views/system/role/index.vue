@@ -4,7 +4,12 @@
       <template #header>
         <div class="card-header">
           <span>角色管理</span>
-          <el-button type="primary" @click="handleAdd">新增角色</el-button>
+          <el-button
+            type="primary"
+            @click="handleAdd"
+            v-permission="'system:role:add'"
+            >新增角色</el-button
+          >
         </div>
       </template>
 
@@ -85,10 +90,20 @@
         />
         <el-table-column label="操作" align="center" width="250">
           <template #default="scope">
-            <el-button type="primary" link @click="handleEdit(scope.row)">
+            <el-button
+              type="primary"
+              link
+              @click="handleEdit(scope.row)"
+              v-permission="'system:role:alter'"
+            >
               <el-icon><Edit /></el-icon> 修改
             </el-button>
-            <el-button type="success" link @click="handlePermission(scope.row)">
+            <el-button
+              type="success"
+              link
+              @click="handlePermission(scope.row)"
+              v-permission="'system:role:assign'"
+            >
               <el-icon><Key /></el-icon> 权限分配
             </el-button>
             <el-button
@@ -96,6 +111,7 @@
               link
               @click="handleDelete(scope.row)"
               :disabled="scope.row.roleKey === 'admin'"
+              v-permission="'system:role:delete'"
             >
               <el-icon><Delete /></el-icon> 删除
             </el-button>
@@ -229,6 +245,7 @@ import {
   getRolePermissions,
   updateRolePermissions,
 } from "@/api/role";
+import { checkPermission } from "@/utils/permission";
 
 // 加载状态
 const loading = ref(false);
@@ -353,6 +370,8 @@ const resetForm = () => {
 
 // 新增角色按钮操作
 const handleAdd = () => {
+  if (!checkPermission("system:role:add")) return;
+
   resetForm();
   dialogTitle.value = "添加角色";
   dialogVisible.value = true;
@@ -360,6 +379,8 @@ const handleAdd = () => {
 
 // 修改角色按钮操作
 const handleEdit = async (row) => {
+  if (!checkPermission("system:role:alter")) return;
+
   resetForm();
   dialogTitle.value = "修改角色";
 
@@ -374,6 +395,8 @@ const handleEdit = async (row) => {
 
 // 权限分配按钮操作
 const handlePermission = async (row) => {
+  if (!checkPermission("system:role:assign")) return;
+
   permissionForm.roleId = row.roleId;
   permissionForm.roleName = row.roleName;
   permissionForm.selectedPermissions = [];
@@ -412,6 +435,8 @@ const handlePermission = async (row) => {
 
 // 提交权限设置
 const submitPermission = async () => {
+  if (!checkPermission("system:role:assign")) return;
+
   submitLoading.value = true;
   try {
     // 更新角色权限
@@ -436,6 +461,8 @@ const submitPermission = async () => {
 
 // 删除角色按钮操作
 const handleDelete = (row) => {
+  if (!checkPermission("system:role:delete")) return;
+
   // 不允许删除管理员角色
   if (row.roleKey === "superAdmin" || row.roleKey === "admin") {
     ElMessage.warning("系统管理员角色不能删除");
@@ -471,10 +498,12 @@ const submitForm = () => {
       try {
         if (roleForm.roleId) {
           // 更新角色
+          if (!checkPermission("system:role:alter")) return;
           await updateRole(roleForm);
           ElMessage.success("修改成功");
         } else {
           // 创建角色
+          if (!checkPermission("system:role:add")) return;
           await createRole(roleForm);
           ElMessage.success("创建成功");
         }
