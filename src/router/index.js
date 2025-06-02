@@ -63,7 +63,7 @@ const notFoundRoute = {
   meta: { hidden: true },
 };
 
-// 权限路由: 系统管理、用户管理、角色管理、部门管理
+// 权限路由: 系统管理、用户管理、角色管理
 const permissionRoutes = [
   {
     path: "/system",
@@ -72,7 +72,7 @@ const permissionRoutes = [
     meta: {
       title: "系统管理",
       icon: "Setting",
-      roles: ["超级管理员"], // 允许访问的角色
+      roles: ["超级管理员", "高级管理员", "用户管理员"], // 允许访问的角色
     },
     children: [
       // 用户管理
@@ -83,7 +83,7 @@ const permissionRoutes = [
         meta: {
           title: "用户管理",
           icon: "User",
-          roles: ["超级管理员", "用户管理员"], // 允许访问的角色
+          roles: ["超级管理员", "高级管理员", "用户管理员"], // 允许访问的角色
         },
       },
       // 角色管理

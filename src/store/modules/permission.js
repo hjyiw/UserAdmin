@@ -87,7 +87,7 @@ export const usePermissionStore = defineStore("permission", {
 
         let accessedRoutes;
         // 如果用户拥有管理员角色，可以访问所有路由
-        if (roles.includes("管理员")) {
+        if (roles.includes("超级管理员")) {
           accessedRoutes = permissionRoutes || [];
         } else {
           // 根据角色过滤路由

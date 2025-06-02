@@ -4,7 +4,12 @@
       <template #header>
         <div class="card-header">
           <span>用户管理</span>
-          <el-button type="primary" @click="handleAdd">新增用户</el-button>
+          <el-button
+            type="primary"
+            @click="handleAdd"
+            v-permission="'system:user:add'"
+            >新增用户</el-button
+          >
         </div>
       </template>
 
@@ -124,13 +129,28 @@
         />
         <el-table-column label="操作" align="center" width="300">
           <template #default="scope">
-            <el-button type="primary" link @click="handleEdit(scope.row)">
+            <el-button
+              type="primary"
+              link
+              @click="handleEdit(scope.row)"
+              v-permission="'system:user:alter'"
+            >
               <el-icon><Edit /></el-icon> 修改
             </el-button>
-            <el-button type="success" link @click="handleRoleAssign(scope.row)">
+            <el-button
+              type="success"
+              link
+              @click="handleRoleAssign(scope.row)"
+              v-permission="'system:user:assign'"
+            >
               <el-icon><Connection /></el-icon> 分配角色
             </el-button>
-            <el-button type="danger" link @click="handleDelete(scope.row)">
+            <el-button
+              type="danger"
+              link
+              @click="handleDelete(scope.row)"
+              v-permission="'system:user:delete'"
+            >
               <el-icon><Delete /></el-icon> 删除
             </el-button>
           </template>
@@ -336,6 +356,7 @@ import {
 } from "@/api/user";
 import { formRules } from "@/utils/validate";
 import { useUserStore } from "@/store";
+import { checkPermission } from "@/utils/permission";
 
 // 加载状态
 const loading = ref(false);

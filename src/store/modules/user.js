@@ -15,42 +15,6 @@ import {
 import { usePermissionStore } from "./permission";
 import request from "@/utils/request";
 
-// 模拟API调用
-const mockLogin = (username, password) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      // 导入用户数据
-      import("@/api/mockData").then(({ mockUserData }) => {
-        // 查找用户
-        const user = mockUserData.find(
-          (u) => u.username === username && u.status === "0"
-        );
-
-        if (!user) {
-          reject({ code: 401, message: "用户名不存在或已被禁用" });
-          return;
-        }
-
-        // 这里简单模拟密码验证，实际应用中应该进行加密比对
-        // 为了演示方便，假设所有用户的初始密码都是123456
-        if (password !== "123456") {
-          reject({ code: 401, message: "密码错误" });
-          return;
-        }
-
-        // 登录成功
-        resolve({
-          code: 200,
-          data: {
-            token: `${username}-token-${new Date().getTime()}`,
-            userId: user.userId,
-          },
-          msg: "登录成功",
-        });
-      });
-    }, 500);
-  });
-};
 // 登录请求
 // body请求参数 ： password,username
 // 方式：post
@@ -185,18 +149,6 @@ const getUserInfo = () => {
       });
   });
 };
-// 模拟退出登录API调用
-const mockLogout = () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        code: 200,
-        data: null,
-        msg: "退出成功",
-      });
-    }, 500);
-  });
-};
 
 // 退出登录
 // 方式：post
@@ -329,6 +281,58 @@ export const useUserStore = defineStore("user", {
   },
 
   actions: {
+    // 检查是否有权限
+    hasPermission(permission) {
+      // 如果没有权限列表，则认为没有权限
+      if (!this.permissions || this.permissions.length === 0) {
+        return false;
+      }
+
+      // 检查是否有超级管理员权限
+      if (this.permissions.includes("*:*:*")) {
+        return true;
+      }
+
+      // 检查是否有指定权限
+      return this.permissions.includes(permission);
+    },
+
+    // 检查是否有多个权限中的任意一个
+    hasAnyPermission(permissions) {
+      // 如果没有权限列表，则认为没有权限
+      if (!this.permissions || this.permissions.length === 0) {
+        return false;
+      }
+
+      // 检查是否有超级管理员权限
+      if (this.permissions.includes("*:*:*")) {
+        return true;
+      }
+
+      // 检查是否有指定权限中的任意一个
+      return permissions.some((permission) =>
+        this.permissions.includes(permission)
+      );
+    },
+
+    // 检查是否有所有指定权限
+    hasAllPermissions(permissions) {
+      // 如果没有权限列表，则认为没有权限
+      if (!this.permissions || this.permissions.length === 0) {
+        return false;
+      }
+
+      // 检查是否有超级管理员权限
+      if (this.permissions.includes("*:*:*")) {
+        return true;
+      }
+
+      // 检查是否有所有指定权限
+      return permissions.every((permission) =>
+        this.permissions.includes(permission)
+      );
+    },
+
     // 登录
     login(userInfo) {
       // 解构用户信息
@@ -370,7 +374,7 @@ export const useUserStore = defineStore("user", {
         getUserInfo()
           .then((response) => {
             const { data } = response;
-            const { user } = data; // 用户对象
+            const user = data.user; // 用户对象
 
             if (!user) {
               reject("获取用户信息失败，请重新登录");
@@ -389,6 +393,8 @@ export const useUserStore = defineStore("user", {
             resolve(data);
           })
           .catch((error) => {
+            console.error("获取用户信息失败，尝试使用模拟数据:", error);
+            // 如果API请求失败，尝试使用模拟数据
             reject(error);
           });
       });
