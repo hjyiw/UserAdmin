@@ -148,16 +148,7 @@ export function listMenus() {
  * @returns {Promise} - 返回权限列表
  */
 export function listPermissions() {
-  return new Promise((resolve, reject) => {
-    request
-      .get("/perm/list")
-      .then((res) => {
-        resolve(res);
-      })
-      .catch((err) => {
-        reject(err);
-      });
-  });
+  return request.get("/perm/list");
 }
 
 /**
@@ -166,18 +157,7 @@ export function listPermissions() {
  * @returns {Promise} - 返回角色的权限
  */
 export function getRolePermissions(roleId) {
-  return new Promise((resolve, reject) => {
-    request
-      .get("/perm", {
-        params: { roleId },
-      })
-      .then((res) => {
-        resolve(res);
-      })
-      .catch((err) => {
-        reject(err);
-      });
-  });
+  return request.get("/perm", { roleId });
 }
 
 /**
@@ -187,14 +167,5 @@ export function getRolePermissions(roleId) {
  * @returns {Promise} - 返回操作结果
  */
 export function updateRolePermissions(roleId, permissions) {
-  return new Promise((resolve, reject) => {
-    request
-      .put(`/role/${roleId}/permission`, { permissions })
-      .then((res) => {
-        resolve(res);
-      })
-      .catch((err) => {
-        reject(err);
-      });
-  });
+  return request.put("/perm", { roleId, permissions });
 }

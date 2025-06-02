@@ -187,17 +187,16 @@
         <el-form-item label="角色名称">
           <span>{{ permissionForm.roleName }}</span>
         </el-form-item>
-        <el-form-item label="权限菜单">
-          <el-tree
-            ref="menuTreeRef"
-            :data="menuOptions"
-            show-checkbox
-            node-key="menuId"
-            :props="{ label: 'menuName', children: 'children' }"
-            :default-checked-keys="permissionForm.menuIds"
-            default-expand-all
-            check-strictly
-          />
+        <el-form-item label="权限列表">
+          <el-checkbox-group v-model="permissionForm.selectedPermissions">
+            <el-checkbox
+              v-for="item in permissionList"
+              :key="item.permission"
+              :label="item.permission"
+            >
+              {{ item.name }}
+            </el-checkbox>
+          </el-checkbox-group>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -222,14 +221,14 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { Search, Refresh, Edit, Delete, Key } from "@element-plus/icons-vue";
 import {
   listRoles,
-  changeRoleStatus,
   getRoleInfo,
   createRole,
   updateRole,
   deleteRole,
-  listMenus,
+  listPermissions,
+  getRolePermissions,
+  updateRolePermissions,
 } from "@/api/role";
-import request from "@/utils/request";
 
 // 加载状态
 const loading = ref(false);
@@ -245,16 +244,14 @@ const queryFormRef = ref(null);
 const roleFormRef = ref(null);
 // 权限表单引用
 const permissionFormRef = ref(null);
-// 菜单树引用
-const menuTreeRef = ref(null);
 // 对话框可见性
 const dialogVisible = ref(false);
 // 对话框标题
 const dialogTitle = ref("");
 // 权限对话框可见性
 const permissionVisible = ref(false);
-// 菜单选项
-const menuOptions = ref([]);
+// 权限列表
+const permissionList = ref([]);
 
 // 查询参数
 const queryParams = reactive({
@@ -273,14 +270,13 @@ const roleForm = reactive({
   roleSort: 1,
   status: "0",
   remark: "",
-  menuIds: [],
 });
 
 // 权限表单数据
 const permissionForm = reactive({
   roleId: undefined,
   roleName: "",
-  menuIds: [],
+  selectedPermissions: [],
 });
 
 // 角色表单验证规则
@@ -319,43 +315,6 @@ const getRoleList = async () => {
   }
 };
 
-// 获取菜单列表
-const getMenuList = async () => {
-  try {
-    const res = await listMenus();
-    menuOptions.value = buildMenuTree(res.data);
-  } catch (error) {
-    console.error("获取菜单列表失败:", error);
-  }
-};
-
-// 构建菜单树
-const buildMenuTree = (menus) => {
-  const menuMap = {};
-  const result = [];
-
-  // 创建映射
-  menus.forEach((menu) => {
-    menuMap[menu.menuId] = { ...menu, children: [] };
-  });
-
-  // 构建树结构
-  menus.forEach((menu) => {
-    const parentId = menu.parentId;
-    if (parentId === 0) {
-      // 根节点
-      result.push(menuMap[menu.menuId]);
-    } else {
-      // 子节点
-      if (menuMap[parentId]) {
-        menuMap[parentId].children.push(menuMap[menu.menuId]);
-      }
-    }
-  });
-
-  return result;
-};
-
 // 搜索按钮操作
 const handleQuery = () => {
   queryParams.pageNum = 1;
@@ -389,7 +348,6 @@ const resetForm = () => {
     roleKey: "",
     roleSort: 1,
     remark: "",
-    menuIds: [],
   });
 };
 
@@ -418,18 +376,37 @@ const handleEdit = async (row) => {
 const handlePermission = async (row) => {
   permissionForm.roleId = row.roleId;
   permissionForm.roleName = row.roleName;
+  permissionForm.selectedPermissions = [];
+
+  submitLoading.value = true;
 
   try {
-    // 先获取角色详情，确保获取最新的menuIds
-    const res = await getRoleInfo(row.roleId);
-    permissionForm.menuIds = res.data.menuIds || [];
+    // 获取所有权限列表
+    const allPermsRes = await listPermissions();
+    if (allPermsRes.code === 200 && allPermsRes.data && allPermsRes.data.list) {
+      permissionList.value = allPermsRes.data.list;
 
-    // 获取菜单列表
-    await getMenuList();
+      // 获取当前角色的权限
+      const rolePermsRes = await getRolePermissions(row.roleId);
+      if (
+        rolePermsRes.code === 200 &&
+        rolePermsRes.data &&
+        rolePermsRes.data.list
+      ) {
+        // 设置已选择的权限
+        permissionForm.selectedPermissions = rolePermsRes.data.list.map(
+          (item) => item.permission
+        );
+      }
 
-    permissionVisible.value = true;
+      permissionVisible.value = true;
+    } else {
+      ElMessage.error("获取权限列表失败");
+    }
   } catch (error) {
-    ElMessage.error(error.message || "获取角色权限信息失败");
+    ElMessage.error(error.message || "获取权限信息失败");
+  } finally {
+    submitLoading.value = false;
   }
 };
 
@@ -437,14 +414,11 @@ const handlePermission = async (row) => {
 const submitPermission = async () => {
   submitLoading.value = true;
   try {
-    // 获取选中的菜单ID
-    const menuIds = menuTreeRef.value.getCheckedKeys();
-
     // 更新角色权限
-    const res = await updateRole({
-      roleId: permissionForm.roleId,
-      menuIds: menuIds,
-    });
+    const res = await updateRolePermissions(
+      permissionForm.roleId,
+      permissionForm.selectedPermissions
+    );
 
     if (res.code === 200) {
       ElMessage.success(res.msg || "权限分配成功");
